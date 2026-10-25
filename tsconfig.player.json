@@ -1,0 +1,14 @@
+{
+  "include": ["src/player/**/*.ts"],
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": ["ES2015", "DOM"],
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "rootDir": "./src/player",
+    "newLine": "lf",
+    "strict": true,
+    "types": [],
+    "skipLibCheck": true
+  }
+}

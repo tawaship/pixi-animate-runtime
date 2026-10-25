@@ -1,0 +1,13 @@
+{
+  "include": ["src/generator/**/*.ts", "src/player/data.ts"],
+  "compilerOptions": {
+    "target": "ES2019",
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "rootDir": "./src",
+    "newLine": "lf",
+    "strict": true,
+    "types": ["node"],
+    "skipLibCheck": true
+  }
+}

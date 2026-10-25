@@ -82,6 +82,9 @@ refresh rate: `handleTick` turns the ticker's time into the content's frames.
   takes it off, and it stops playing
 - `tick(instance)` plays exactly one frame, for stepping through content by hand
 
+Loaded with a `<script>` tag after `pixi.js` (`dist/pixi-animate-runtime.js`), the player is
+`PIXI.animateRuntime`: the same API, as `PIXI.animateRuntime.createContent(...)`.
+
 ### Objects and their Pixi nodes
 
 Every instance is a CreateJS-compatible object (what frame scripts see as `this`), shown by a PixiJS node

@@ -5,7 +5,8 @@
  * @license MIT
  */
 
-var PixiAnimateRuntime = (function (exports, PIXI) {
+this.PIXI = this.PIXI || {};
+(function (exports, PIXI) {
     'use strict';
 
     function _interopNamespaceDefault(e) {
@@ -3119,7 +3120,5 @@ var PixiAnimateRuntime = (function (exports, PIXI) {
     exports.satisfies = satisfies;
     exports.tick = tick;
 
-    return exports;
-
-})({}, PIXI);
+})(this.PIXI.animateRuntime = this.PIXI.animateRuntime || {}, PIXI);
 //# sourceMappingURL=pixi-animate-runtime.js.map

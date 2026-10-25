@@ -43,7 +43,7 @@ export default (async () => {
 		{
 			input: 'src/player/index.ts',
 			output: [
-				{ banner, file: 'dist/pixi-animate-runtime.js', format: 'iife', name: 'PixiAnimateRuntime', globals: { 'pixi.js': 'PIXI' }, sourcemap: true },
+				{ banner, file: 'dist/pixi-animate-runtime.js', format: 'iife', name: 'PIXI.animateRuntime', extend: true, globals: { 'pixi.js': 'PIXI' }, sourcemap: true },
 				{ banner, file: 'dist/pixi-animate-runtime.cjs.js', format: 'cjs', sourcemap: true },
 				{ banner, file: 'dist/pixi-animate-runtime.esm.js', format: 'esm', sourcemap: true }
 			],

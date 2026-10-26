@@ -2776,7 +2776,8 @@ function handleFilterCache(event) {
 }
 /**
  * A content: the symbol classes built from generated data, sharing one
- * definition per symbol.
+ * definition per symbol. Not part of the API: applications get an IContent.
+ * @internal
  */
 var Content = function Content(factory, assets) {
     var this$1$1 = this;
@@ -3125,10 +3126,26 @@ Content.prototype._populate = function _populate (self, def, graphics) {
     self._renderFirstFrame();
 };
 /**
- * Builds a content from the factory of its runtime content and the textures of its images.
+ * What the application gets of a content: the content itself stays out of
+ * reach, the methods closing over it.
  */
-function createContent(factory, assets) {
-    return new Content(factory, assets);
+function contentInterface(content) {
+    var properties = {};
+    Object.keys(content.data.properties).forEach(function (key) {
+        var value = content.data.properties[key];
+        if (value === null || typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
+            properties[key] = value;
+        }
+    });
+    var id = properties.id;
+    return {
+        id: typeof id === 'string' ? id : '',
+        lib: content.lib,
+        properties: Object.freeze(properties),
+        create: function create(symbol) {
+            return content.create(symbol);
+        }
+    };
 }
 /**
  * Plays one frame of a display tree the way createjs does on a stage update:
@@ -3311,15 +3328,15 @@ function resolveContentUrl(basepath, src, version) {
     return version === undefined || version === null || version === '' ? url : withQuery(url, '_fv', String(version));
 }
 /** The images a content loads, with their URLs */
-function contentImageRequests(content, basepath, version) {
+function imageRequests(content, basepath, version) {
     return content.data.images.map(function (entry) { return ({ id: entry.id, url: resolveContentUrl(basepath, entry.src, version) }); });
 }
 function loadContent(target, options) {
     return new Promise(function (resolve, reject) {
         var content = new Content(getContentFactory(target.id));
-        var requests = contentImageRequests(content, target.basepath, options.version);
+        var requests = imageRequests(content, target.basepath, options.version);
         if (!requests.length) {
-            resolve(content);
+            resolve(contentInterface(content));
             return;
         }
         var crossOrigin = !target.options || target.options.crossOrigin !== false;
@@ -3344,7 +3361,7 @@ function loadContent(target, options) {
                 }
             });
             content._applyImages(textures);
-            resolve(content);
+            resolve(contentInterface(content));
         });
     });
 }
@@ -3390,8 +3407,6 @@ exports.TweenState = TweenState;
 exports.VERSION = VERSION;
 exports.checkVersion = checkVersion;
 exports.compareVersions = compareVersions;
-exports.contentImageRequests = contentImageRequests;
-exports.createContent = createContent;
 exports.drawCommands = drawCommands;
 exports.getContentFactory = getContentFactory;
 exports.loadContentAsync = loadContentAsync;

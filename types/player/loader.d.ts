@@ -1,4 +1,4 @@
-import { Content, TContentFactory } from './content';
+import { IContent, TContentFactory } from './content';
 /**
  * The global runtime content files register their factories in, by
  * composition id: `window.PixiAnimateRuntimeContents[id] = factory`. It is not
@@ -21,11 +21,6 @@ export interface ILoadContentOptions {
     /** Added to every image URL as the query `_fv=<version>` (the query an image path already has stays) */
     version?: string | number;
 }
-/** An image of a content to load: its manifest id and its URL */
-export interface IContentImageRequest {
-    id: string;
-    url: string;
-}
 /**
  * The factory a runtime content file registered under a composition id. The
  * file has to be loaded first (a script tag, or any other way).
@@ -38,12 +33,10 @@ export declare function getContentFactory(id: string): TContentFactory;
  * as they are. The same as Pixim.js's utils.resolveUri.
  */
 export declare function resolveContentUrl(basepath: string, src: string, version?: string | number | null): string;
-/** The images a content loads, with their URLs */
-export declare function contentImageRequests(content: Content, basepath: string, version?: string | number | null): IContentImageRequest[];
 /**
  * Loads contents: the factory each runtime content file registered under the
  * target's composition id (the file has to be loaded already), the content's
  * images from the target's base path, and the content built with them.
  */
-export declare function loadContentAsync(target: IContentTarget, options?: ILoadContentOptions): Promise<Content>;
-export declare function loadContentAsync(targets: IContentTarget[], options?: ILoadContentOptions): Promise<Content[]>;
+export declare function loadContentAsync(target: IContentTarget, options?: ILoadContentOptions): Promise<IContent>;
+export declare function loadContentAsync(targets: IContentTarget[], options?: ILoadContentOptions): Promise<IContent[]>;

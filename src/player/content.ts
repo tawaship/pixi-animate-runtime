@@ -139,9 +139,34 @@ function handleFilterCache(event: Event): void {
 	});
 }
 
+/** A value of the published lib.properties (width, height, fps, color, ...) */
+export type TContentProperty = number | string | boolean | null;
+
+export interface IContentProperties {
+	[key: string]: TContentProperty;
+}
+
+/**
+ * A loaded content, as the application uses it.
+ */
+export interface IContent {
+	/** The composition id (lib.properties.id of the published content) */
+	readonly id: string;
+	/** The symbol classes by symbol name: what frame scripts reach as `lib` */
+	readonly lib: ILibrary;
+	/** The values of the published lib.properties (its lists, such as the manifest, left out) */
+	readonly properties: Readonly<IContentProperties>;
+	/**
+	 * An instance of a symbol for the application to place, set up as the HTML
+	 * template sets up the root it creates.
+	 */
+	create(id: string): DisplayObject;
+}
+
 /**
  * A content: the symbol classes built from generated data, sharing one
- * definition per symbol.
+ * definition per symbol. Not part of the API: applications get an IContent.
+ * @internal
  */
 export class Content implements ITextureSource {
 	readonly data: IRuntimeData;
@@ -505,10 +530,26 @@ export class Content implements ITextureSource {
 }
 
 /**
- * Builds a content from the factory of its runtime content and the textures of its images.
+ * What the application gets of a content: the content itself stays out of
+ * reach, the methods closing over it.
  */
-export function createContent(factory: TContentFactory, assets?: IContentAssets): Content {
-	return new Content(factory, assets);
+export function contentInterface(content: Content): IContent {
+	const properties: IContentProperties = {};
+	Object.keys(content.data.properties).forEach(key => {
+		const value = content.data.properties[key];
+		if (value === null || typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
+			properties[key] = value;
+		}
+	});
+	const id = properties.id;
+	return {
+		id: typeof id === 'string' ? id : '',
+		lib: content.lib,
+		properties: Object.freeze(properties),
+		create(symbol: string): DisplayObject {
+			return content.create(symbol);
+		}
+	};
 }
 
 /**

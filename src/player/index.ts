@@ -11,12 +11,12 @@ export {
 	GraphicsCommand, GRAPHICS_COMMANDS, PixiGraphics, PixiSprite, PixiText, drawCommands, parseColor, GradientTexture
 } from './objects';
 export type { ITextureSource, IImageAsset, ISpriteFrame, IButtonTarget, IGradient } from './objects';
-export { Content, createContent, tick, resolveState, namespace } from './content';
+export { Content, tick, resolveState, namespace } from './content';
 export { AnimateContainer } from './animate-container';
-export { loadContentAsync, getContentFactory, resolveContentUrl, contentImageRequests, CONTENTS_GLOBAL } from './loader';
-export type { IContentTarget, ILoadContentOptions, IContentImageRequest } from './loader';
+export { loadContentAsync, getContentFactory, resolveContentUrl, CONTENTS_GLOBAL } from './loader';
+export type { IContentTarget, ILoadContentOptions } from './loader';
 export type {
-	TContentFactory, IGeneratedContent, IContentAssets, ILibrary, TSymbolClass, TMovieClipClass,
+	TContentFactory, IGeneratedContent, IContentAssets, IContent, IContentProperties, TContentProperty, ILibrary, TSymbolClass, TMovieClipClass,
 	TSpriteClass, TBitmapClass, TNamespace, ISilentSound
 } from './content';
 export { RUNTIME_CONTENT_RANGE } from './data';

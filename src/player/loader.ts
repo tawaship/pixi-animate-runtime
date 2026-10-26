@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { Content, TContentFactory } from './content';
+import { Content, IContent, TContentFactory, contentInterface } from './content';
 
 /**
  * The global runtime content files register their factories in, by
@@ -27,7 +27,7 @@ export interface ILoadContentOptions {
 }
 
 /** An image of a content to load: its manifest id and its URL */
-export interface IContentImageRequest {
+interface IContentImageRequest {
 	id: string;
 	url: string;
 }
@@ -89,16 +89,16 @@ export function resolveContentUrl(basepath: string, src: string, version?: strin
 }
 
 /** The images a content loads, with their URLs */
-export function contentImageRequests(content: Content, basepath: string, version?: string | number | null): IContentImageRequest[] {
+function imageRequests(content: Content, basepath: string, version?: string | number | null): IContentImageRequest[] {
 	return content.data.images.map(entry => ({ id: entry.id, url: resolveContentUrl(basepath, entry.src, version) }));
 }
 
-function loadContent(target: IContentTarget, options: ILoadContentOptions): Promise<Content> {
-	return new Promise<Content>((resolve, reject) => {
+function loadContent(target: IContentTarget, options: ILoadContentOptions): Promise<IContent> {
+	return new Promise<IContent>((resolve, reject) => {
 		const content = new Content(getContentFactory(target.id));
-		const requests = contentImageRequests(content, target.basepath, options.version);
+		const requests = imageRequests(content, target.basepath, options.version);
 		if (!requests.length) {
-			resolve(content);
+			resolve(contentInterface(content));
 			return;
 		}
 		const crossOrigin = !target.options || target.options.crossOrigin !== false;
@@ -123,7 +123,7 @@ function loadContent(target: IContentTarget, options: ILoadContentOptions): Prom
 				}
 			});
 			content._applyImages(textures);
-			resolve(content);
+			resolve(contentInterface(content));
 		});
 	});
 }
@@ -133,9 +133,9 @@ function loadContent(target: IContentTarget, options: ILoadContentOptions): Prom
  * target's composition id (the file has to be loaded already), the content's
  * images from the target's base path, and the content built with them.
  */
-export function loadContentAsync(target: IContentTarget, options?: ILoadContentOptions): Promise<Content>;
-export function loadContentAsync(targets: IContentTarget[], options?: ILoadContentOptions): Promise<Content[]>;
-export function loadContentAsync(targets: IContentTarget | IContentTarget[], options?: ILoadContentOptions): Promise<Content | Content[]> {
+export function loadContentAsync(target: IContentTarget, options?: ILoadContentOptions): Promise<IContent>;
+export function loadContentAsync(targets: IContentTarget[], options?: ILoadContentOptions): Promise<IContent[]>;
+export function loadContentAsync(targets: IContentTarget | IContentTarget[], options?: ILoadContentOptions): Promise<IContent | IContent[]> {
 	const opts = options || {};
 	if (Array.isArray(targets)) {
 		return Promise.all(targets.map(target => loadContent(target, opts)));

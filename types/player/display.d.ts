@@ -10,6 +10,8 @@ export interface IOwnedNode extends PIXI.Container {
 export declare class PixiContainer extends PIXI.Container implements IOwnedNode {
     owner: DisplayObject | null;
 }
+/** A hit area nothing is inside: Pixi's hit test skips a node with it and the node's children */
+export declare const NO_HIT_AREA: PIXI.Rectangle;
 /**
  * Members a filter shown through a display object has to provide.
  */

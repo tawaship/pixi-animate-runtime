@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { DisplayObject, Container, IOwnedNode } from './display';
+import { DisplayObject, Container, IOwnedNode, NO_HIT_AREA } from './display';
 import { Event } from './events';
 import { Rectangle } from './geom';
 import type { IGraphicsCommandDef, IDataMap, TDataValue } from './data';
@@ -168,15 +168,153 @@ function paintOf(style: TDataValue | undefined, matrix: TDataValue | undefined, 
 		return texture ? { color: 0xffffff, alpha: 1, texture, matrix: m } : null;
 	}
 
-	// Gradients are not drawn by Pixi's Graphics: the first color stands in for now
-	const colors = style.colors;
-	if (Array.isArray(colors) && colors.length) {
-		const first = parseColor(colors[0]);
-		if (first) {
-			return { color: first.color, alpha: first.alpha, texture: null, matrix: null };
-		}
+	const gradient = gradientOf(style);
+	if (!gradient) {
+		return null;
 	}
-	return null;
+	const texture = gradientTexture(gradient);
+	// A gradient canvas paints nothing with (a line of length 0, a circle of radius 0): nothing is drawn
+	return texture ? { color: 0xffffff, alpha: 1, texture, matrix: texture.toShape } : { color: 0, alpha: 0, texture: null, matrix: null };
+}
+
+/**
+ * A linear or radial gradient as createjs makes it (the props of a Fill or
+ * Stroke style made by beginLinearGradientFill and the like): colors at
+ * ratios along the line from (x0, y0) to (x1, y1), or between the circles
+ * (x0, y0, r0) and (x1, y1, r1), in the shape's coordinates.
+ */
+export interface IGradient {
+	type: 'linear' | 'radial';
+	colors: string[];
+	ratios: number[];
+	x0: number;
+	y0: number;
+	r0: number;
+	x1: number;
+	y1: number;
+	r1: number;
+}
+
+function gradientOf(style: IDataMap): IGradient | null {
+	const type = style.type;
+	const colors = style.colors;
+	const ratios = style.ratios;
+	if ((type !== 'linear' && type !== 'radial') || !Array.isArray(colors) || !Array.isArray(ratios)) {
+		return null;
+	}
+	return {
+		type,
+		colors: colors.map(color => String(color)),
+		ratios: ratios.map(ratio => Number(ratio)),
+		x0: num(style, 'x0'), y0: num(style, 'y0'), r0: type === 'radial' ? num(style, 'r0') : 0,
+		x1: num(style, 'x1'), y1: num(style, 'y1'), r1: type === 'radial' ? num(style, 'r1') : 0
+	};
+}
+
+/** Pixels a gradient is drawn across: along the line of a linear one, across the circles of a radial one */
+const GRADIENT_SIZE = 256;
+
+/**
+ * A gradient drawn into a canvas by the browser's own gradient (so its
+ * colors are what canvas, and createjs, paints), as a texture that Pixi's
+ * Graphics fills and strokes with through a matrix. `gradient` is the
+ * gradient in the shape's coordinates, `local` the same gradient in the
+ * texture's pixels, and `toShape` takes texture pixels to the shape's
+ * coordinates. Outside the drawn area the texture's edge pixels repeat
+ * (Pixi clamps), which is how canvas pads a gradient with its end colors.
+ */
+export class GradientTexture extends PIXI.Texture {
+	readonly gradient: IGradient;
+	readonly local: IGradient;
+	readonly toShape: PIXI.Matrix;
+
+	constructor(canvas: HTMLCanvasElement, gradient: IGradient, local: IGradient, toShape: PIXI.Matrix) {
+		super(PIXI.BaseTexture.from(canvas));
+		this.gradient = gradient;
+		this.local = local;
+		this.toShape = toShape;
+	}
+}
+
+/** Gradient textures by their gradient, shared by every drawing that uses the same gradient */
+const gradientTextures = new Map<string, GradientTexture | null>();
+
+function gradientTexture(gradient: IGradient): GradientTexture | null {
+	const key = JSON.stringify(gradient);
+	const known = gradientTextures.get(key);
+	if (known !== undefined) {
+		return known;
+	}
+	const texture = gradient.type === 'linear' ? linearGradientTexture(gradient) : radialGradientTexture(gradient);
+	gradientTextures.set(key, texture);
+	return texture;
+}
+
+function paintGradient(canvas: HTMLCanvasElement, local: IGradient): void {
+	const context = canvas.getContext('2d');
+	if (!context) {
+		return;
+	}
+	const paint = local.type === 'linear'
+		? context.createLinearGradient(local.x0, local.y0, local.x1, local.y1)
+		: context.createRadialGradient(local.x0, local.y0, local.r0, local.x1, local.y1, local.r1);
+	local.colors.forEach((color, i) => {
+		paint.addColorStop(local.ratios[i], color);
+	});
+	context.fillStyle = paint;
+	context.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+/**
+ * A linear gradient drawn from the left edge to the right edge of a canvas
+ * one pixel high. The texture's x axis runs along the gradient's line and its
+ * y axis across it (every row is the same, so how far across does not matter).
+ */
+function linearGradientTexture(gradient: IGradient): GradientTexture | null {
+	const dx = gradient.x1 - gradient.x0;
+	const dy = gradient.y1 - gradient.y0;
+	const length = Math.sqrt(dx * dx + dy * dy);
+	if (!length) {
+		return null;
+	}
+	const canvas = document.createElement('canvas');
+	canvas.width = GRADIENT_SIZE;
+	canvas.height = 1;
+	const local: IGradient = {
+		type: 'linear', colors: gradient.colors, ratios: gradient.ratios,
+		x0: 0, y0: 0, r0: 0, x1: GRADIENT_SIZE, y1: 0, r1: 0
+	};
+	paintGradient(canvas, local);
+	const toShape = new PIXI.Matrix(dx / GRADIENT_SIZE, dy / GRADIENT_SIZE, -dy / length, dx / length, gradient.x0, gradient.y0);
+	return new GradientTexture(canvas, gradient, local, toShape);
+}
+
+/**
+ * A radial gradient drawn into a square canvas covering both of its circles,
+ * scaled to fit (the mapping is a scale and a move, so the circles stay
+ * circles and every point keeps its place in the gradient).
+ */
+function radialGradientTexture(gradient: IGradient): GradientTexture | null {
+	const left = Math.min(gradient.x0 - gradient.r0, gradient.x1 - gradient.r1);
+	const top = Math.min(gradient.y0 - gradient.r0, gradient.y1 - gradient.r1);
+	const right = Math.max(gradient.x0 + gradient.r0, gradient.x1 + gradient.r1);
+	const bottom = Math.max(gradient.y0 + gradient.r0, gradient.y1 + gradient.r1);
+	const size = Math.max(right - left, bottom - top);
+	if (!(size > 0) || gradient.r1 === gradient.r0 && gradient.x0 === gradient.x1 && gradient.y0 === gradient.y1) {
+		return null;
+	}
+	const scale = GRADIENT_SIZE / size;
+	const canvas = document.createElement('canvas');
+	canvas.width = GRADIENT_SIZE;
+	canvas.height = GRADIENT_SIZE;
+	const local: IGradient = {
+		type: 'radial', colors: gradient.colors, ratios: gradient.ratios,
+		x0: (gradient.x0 - left) * scale, y0: (gradient.y0 - top) * scale, r0: gradient.r0 * scale,
+		x1: (gradient.x1 - left) * scale, y1: (gradient.y1 - top) * scale, r1: gradient.r1 * scale
+	};
+	paintGradient(canvas, local);
+	const toShape = new PIXI.Matrix(1 / scale, 0, 0, 1 / scale, left, top);
+	return new GradientTexture(canvas, gradient, local, toShape);
 }
 
 function drawPath(target: PIXI.Graphics, command: IGraphicsCommandDef): void {
@@ -624,6 +762,8 @@ export class Shape extends DisplayObject {
 		let node = this._maskGraphics;
 		if (!node) {
 			node = this._maskGraphics = new PixiGraphics(this._graphics ? this._graphics.maskGeometry() : getEmptyGeometry());
+			// Never hit by the pointer, as createjs never hits a mask
+			node.hitArea = NO_HIT_AREA;
 			this.pixiGraphics.addChild(node);
 		}
 		return node;

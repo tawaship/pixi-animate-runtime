@@ -8,9 +8,9 @@ export { MovieClip, Timeline, TweenState, INDEPENDENT, SINGLE_FRAME, SYNCHED } f
 export type { TScript, TWriter, TWrittenValue, ITweenScope, IFilterCacheEntry } from './movieclip';
 export {
 	Shape, Graphics, Sprite, SpriteSheet, Bitmap, Text, ColorFilter, ButtonHelper,
-	GraphicsCommand, GRAPHICS_COMMANDS, PixiGraphics, PixiSprite, PixiText, drawCommands, parseColor
+	GraphicsCommand, GRAPHICS_COMMANDS, PixiGraphics, PixiSprite, PixiText, drawCommands, parseColor, GradientTexture
 } from './objects';
-export type { ITextureSource, IImageAsset, ISpriteFrame, IButtonTarget } from './objects';
+export type { ITextureSource, IImageAsset, ISpriteFrame, IButtonTarget, IGradient } from './objects';
 export { Content, createContent, tick, resolveState, namespace } from './content';
 export { AnimateContainer } from './animate-container';
 export type {

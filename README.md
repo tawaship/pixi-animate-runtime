@@ -114,9 +114,10 @@ CreateJS-compatible classes), and `lib` (the symbol classes). `exportRoot` and `
 
 ## Current limits
 
-- Gradient fills and strokes are drawn with their first color only
-- Pointer interaction does not reach buttons yet: they show their idle frame and hold their state, but
-  PixiJS pointer events are not delivered to them
+- Buttons do not react to the pointer: a button shows its idle ("up") frame and stays there. Listeners for
+  CreateJS mouse events (`mousedown`, `click`, `rollover` and so on) are not called. To react to the
+  pointer, listen to PixiJS events on the instance's `pixi` node (`pointerdown`, `pointertap`,
+  `pointerover` and so on, with `interactive = true`). Masks are never hit by the pointer
 - Sound is not played
 - Content that uses the Animate camera ("Advanced Layers") is not supported: delete the camera layer and
   publish again

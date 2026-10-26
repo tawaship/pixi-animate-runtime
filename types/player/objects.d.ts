@@ -46,6 +46,38 @@ interface IColor {
  */
 export declare function parseColor(value: TDataValue | undefined): IColor | null;
 /**
+ * A linear or radial gradient as createjs makes it (the props of a Fill or
+ * Stroke style made by beginLinearGradientFill and the like): colors at
+ * ratios along the line from (x0, y0) to (x1, y1), or between the circles
+ * (x0, y0, r0) and (x1, y1, r1), in the shape's coordinates.
+ */
+export interface IGradient {
+    type: 'linear' | 'radial';
+    colors: string[];
+    ratios: number[];
+    x0: number;
+    y0: number;
+    r0: number;
+    x1: number;
+    y1: number;
+    r1: number;
+}
+/**
+ * A gradient drawn into a canvas by the browser's own gradient (so its
+ * colors are what canvas, and createjs, paints), as a texture that Pixi's
+ * Graphics fills and strokes with through a matrix. `gradient` is the
+ * gradient in the shape's coordinates, `local` the same gradient in the
+ * texture's pixels, and `toShape` takes texture pixels to the shape's
+ * coordinates. Outside the drawn area the texture's edge pixels repeat
+ * (Pixi clamps), which is how canvas pads a gradient with its end colors.
+ */
+export declare class GradientTexture extends PIXI.Texture {
+    readonly gradient: IGradient;
+    readonly local: IGradient;
+    readonly toShape: PIXI.Matrix;
+    constructor(canvas: HTMLCanvasElement, gradient: IGradient, local: IGradient, toShape: PIXI.Matrix);
+}
+/**
  * Draws createjs drawing commands into a Pixi Graphics. Pixi takes the paint
  * first, so each path is replayed under the paint that follows it, with the
  * holes canvas's nonzero fill would cut (holes: the MoveTo commands that

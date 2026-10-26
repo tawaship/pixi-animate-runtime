@@ -397,6 +397,8 @@ var PixiContainer = /*@__PURE__*/(function (superclass) {
     return PixiContainer;
 }(PIXI__namespace.Container));
 var nextId = 0;
+/** A hit area nothing is inside: Pixi's hit test skips a node with it and the node's children */
+var NO_HIT_AREA = new PIXI__namespace.Rectangle(0, 0, 0, 0);
 /** createjs compositeOperation -> Pixi blend mode (the ones WebGL renders) */
 var BLEND_MODES = {
     'source-over': PIXI__namespace.BLEND_MODES.NORMAL,
@@ -564,7 +566,17 @@ var DisplayObject = /*@__PURE__*/(function (EventDispatcher) {
      * any display list and is not drawn itself)
      */
     DisplayObject.prototype._updateRenderable = function _updateRenderable () {
-        this.pixi.renderable = !this.pixi.isMask && !this._maskTargets.length;
+        var maskOnly = this.pixi.isMask || this._maskTargets.length > 0;
+        this.pixi.renderable = !maskOnly;
+        // Pixi hit tests nodes that are not drawn: a mask's node is kept out of pointer
+        // hits (with its children) by a hit area nothing is inside, as createjs never hits a mask
+        if (maskOnly) {
+            this.pixi.hitArea = NO_HIT_AREA;
+        }
+        else if (this.pixi.hitArea === NO_HIT_AREA) {
+            // Back to Pixi's default (null; the type definition does not take null, Pixi does)
+            Reflect.set(this.pixi, 'hitArea', null);
+        }
     };
     /** Whether this object clips when used as a mask (createjs clips only with a non-empty Graphics) */
     DisplayObject.prototype._clipsAsMask = function _clipsAsMask () {
@@ -1527,27 +1539,141 @@ function paintOf(style, matrix, textures) {
     }
     if (style.type === 'bitmap') {
         var image = style.image;
-        var texture = null;
+        var texture$1 = null;
         if (isDataMap(image)) {
             if (typeof image.image === 'string') {
-                texture = textures.image(image.image);
+                texture$1 = textures.image(image.image);
             }
             else if (typeof image.sheet === 'string' && typeof image.frame === 'number') {
-                texture = textures.frame(image.sheet, image.frame);
+                texture$1 = textures.frame(image.sheet, image.frame);
             }
         }
         var m = isDataMap(matrix) ? new PIXI__namespace.Matrix(num(matrix, 'a'), num(matrix, 'b'), num(matrix, 'c'), num(matrix, 'd'), num(matrix, 'tx'), num(matrix, 'ty')) : null;
-        return texture ? { color: 0xffffff, alpha: 1, texture: texture, matrix: m } : null;
+        return texture$1 ? { color: 0xffffff, alpha: 1, texture: texture$1, matrix: m } : null;
     }
-    // Gradients are not drawn by Pixi's Graphics: the first color stands in for now
+    var gradient = gradientOf(style);
+    if (!gradient) {
+        return null;
+    }
+    var texture = gradientTexture(gradient);
+    // A gradient canvas paints nothing with (a line of length 0, a circle of radius 0): nothing is drawn
+    return texture ? { color: 0xffffff, alpha: 1, texture: texture, matrix: texture.toShape } : { color: 0, alpha: 0, texture: null, matrix: null };
+}
+function gradientOf(style) {
+    var type = style.type;
     var colors = style.colors;
-    if (Array.isArray(colors) && colors.length) {
-        var first = parseColor(colors[0]);
-        if (first) {
-            return { color: first.color, alpha: first.alpha, texture: null, matrix: null };
-        }
+    var ratios = style.ratios;
+    if ((type !== 'linear' && type !== 'radial') || !Array.isArray(colors) || !Array.isArray(ratios)) {
+        return null;
     }
-    return null;
+    return {
+        type: type,
+        colors: colors.map(function (color) { return String(color); }),
+        ratios: ratios.map(function (ratio) { return Number(ratio); }),
+        x0: num(style, 'x0'), y0: num(style, 'y0'), r0: type === 'radial' ? num(style, 'r0') : 0,
+        x1: num(style, 'x1'), y1: num(style, 'y1'), r1: type === 'radial' ? num(style, 'r1') : 0
+    };
+}
+/** Pixels a gradient is drawn across: along the line of a linear one, across the circles of a radial one */
+var GRADIENT_SIZE = 256;
+/**
+ * A gradient drawn into a canvas by the browser's own gradient (so its
+ * colors are what canvas, and createjs, paints), as a texture that Pixi's
+ * Graphics fills and strokes with through a matrix. `gradient` is the
+ * gradient in the shape's coordinates, `local` the same gradient in the
+ * texture's pixels, and `toShape` takes texture pixels to the shape's
+ * coordinates. Outside the drawn area the texture's edge pixels repeat
+ * (Pixi clamps), which is how canvas pads a gradient with its end colors.
+ */
+var GradientTexture = /*@__PURE__*/(function (superclass) {
+    function GradientTexture(canvas, gradient, local, toShape) {
+        superclass.call(this, PIXI__namespace.BaseTexture.from(canvas));
+        this.gradient = gradient;
+        this.local = local;
+        this.toShape = toShape;
+    }
+
+    if ( superclass ) GradientTexture.__proto__ = superclass;
+    GradientTexture.prototype = Object.create( superclass && superclass.prototype );
+    GradientTexture.prototype.constructor = GradientTexture;
+
+    return GradientTexture;
+}(PIXI__namespace.Texture));
+/** Gradient textures by their gradient, shared by every drawing that uses the same gradient */
+var gradientTextures = new Map();
+function gradientTexture(gradient) {
+    var key = JSON.stringify(gradient);
+    var known = gradientTextures.get(key);
+    if (known !== undefined) {
+        return known;
+    }
+    var texture = gradient.type === 'linear' ? linearGradientTexture(gradient) : radialGradientTexture(gradient);
+    gradientTextures.set(key, texture);
+    return texture;
+}
+function paintGradient(canvas, local) {
+    var context = canvas.getContext('2d');
+    if (!context) {
+        return;
+    }
+    var paint = local.type === 'linear'
+        ? context.createLinearGradient(local.x0, local.y0, local.x1, local.y1)
+        : context.createRadialGradient(local.x0, local.y0, local.r0, local.x1, local.y1, local.r1);
+    local.colors.forEach(function (color, i) {
+        paint.addColorStop(local.ratios[i], color);
+    });
+    context.fillStyle = paint;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+}
+/**
+ * A linear gradient drawn from the left edge to the right edge of a canvas
+ * one pixel high. The texture's x axis runs along the gradient's line and its
+ * y axis across it (every row is the same, so how far across does not matter).
+ */
+function linearGradientTexture(gradient) {
+    var dx = gradient.x1 - gradient.x0;
+    var dy = gradient.y1 - gradient.y0;
+    var length = Math.sqrt(dx * dx + dy * dy);
+    if (!length) {
+        return null;
+    }
+    var canvas = document.createElement('canvas');
+    canvas.width = GRADIENT_SIZE;
+    canvas.height = 1;
+    var local = {
+        type: 'linear', colors: gradient.colors, ratios: gradient.ratios,
+        x0: 0, y0: 0, r0: 0, x1: GRADIENT_SIZE, y1: 0, r1: 0
+    };
+    paintGradient(canvas, local);
+    var toShape = new PIXI__namespace.Matrix(dx / GRADIENT_SIZE, dy / GRADIENT_SIZE, -dy / length, dx / length, gradient.x0, gradient.y0);
+    return new GradientTexture(canvas, gradient, local, toShape);
+}
+/**
+ * A radial gradient drawn into a square canvas covering both of its circles,
+ * scaled to fit (the mapping is a scale and a move, so the circles stay
+ * circles and every point keeps its place in the gradient).
+ */
+function radialGradientTexture(gradient) {
+    var left = Math.min(gradient.x0 - gradient.r0, gradient.x1 - gradient.r1);
+    var top = Math.min(gradient.y0 - gradient.r0, gradient.y1 - gradient.r1);
+    var right = Math.max(gradient.x0 + gradient.r0, gradient.x1 + gradient.r1);
+    var bottom = Math.max(gradient.y0 + gradient.r0, gradient.y1 + gradient.r1);
+    var size = Math.max(right - left, bottom - top);
+    if (!(size > 0) || gradient.r1 === gradient.r0 && gradient.x0 === gradient.x1 && gradient.y0 === gradient.y1) {
+        return null;
+    }
+    var scale = GRADIENT_SIZE / size;
+    var canvas = document.createElement('canvas');
+    canvas.width = GRADIENT_SIZE;
+    canvas.height = GRADIENT_SIZE;
+    var local = {
+        type: 'radial', colors: gradient.colors, ratios: gradient.ratios,
+        x0: (gradient.x0 - left) * scale, y0: (gradient.y0 - top) * scale, r0: gradient.r0 * scale,
+        x1: (gradient.x1 - left) * scale, y1: (gradient.y1 - top) * scale, r1: gradient.r1 * scale
+    };
+    paintGradient(canvas, local);
+    var toShape = new PIXI__namespace.Matrix(1 / scale, 0, 0, 1 / scale, left, top);
+    return new GradientTexture(canvas, gradient, local, toShape);
 }
 function drawPath(target, command) {
     var p = command.props;
@@ -1970,6 +2096,8 @@ var Shape = /*@__PURE__*/(function (DisplayObject) {
         var node = this._maskGraphics;
         if (!node) {
             node = this._maskGraphics = new PixiGraphics(this._graphics ? this._graphics.maskGeometry() : getEmptyGeometry());
+            // Never hit by the pointer, as createjs never hits a mask
+            node.hitArea = NO_HIT_AREA;
             this.pixiGraphics.addChild(node);
         }
         return node;
@@ -3090,6 +3218,7 @@ exports.DisplayObject = DisplayObject;
 exports.Event = Event;
 exports.EventDispatcher = EventDispatcher;
 exports.GRAPHICS_COMMANDS = GRAPHICS_COMMANDS;
+exports.GradientTexture = GradientTexture;
 exports.Graphics = Graphics;
 exports.GraphicsCommand = GraphicsCommand;
 exports.INDEPENDENT = INDEPENDENT;

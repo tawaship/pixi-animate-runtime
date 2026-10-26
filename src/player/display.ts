@@ -16,6 +16,9 @@ export class PixiContainer extends PIXI.Container implements IOwnedNode {
 
 let nextId = 0;
 
+/** A hit area nothing is inside: Pixi's hit test skips a node with it and the node's children */
+export const NO_HIT_AREA = new PIXI.Rectangle(0, 0, 0, 0);
+
 /** createjs compositeOperation -> Pixi blend mode (the ones WebGL renders) */
 const BLEND_MODES: { [operation: string]: PIXI.BLEND_MODES } = {
 	'source-over': PIXI.BLEND_MODES.NORMAL,
@@ -212,7 +215,16 @@ export class DisplayObject extends EventDispatcher {
 	 * any display list and is not drawn itself)
 	 */
 	_updateRenderable(): void {
-		this.pixi.renderable = !this.pixi.isMask && !this._maskTargets.length;
+		const maskOnly = this.pixi.isMask || this._maskTargets.length > 0;
+		this.pixi.renderable = !maskOnly;
+		// Pixi hit tests nodes that are not drawn: a mask's node is kept out of pointer
+		// hits (with its children) by a hit area nothing is inside, as createjs never hits a mask
+		if (maskOnly) {
+			this.pixi.hitArea = NO_HIT_AREA;
+		} else if (this.pixi.hitArea === NO_HIT_AREA) {
+			// Back to Pixi's default (null; the type definition does not take null, Pixi does)
+			Reflect.set(this.pixi, 'hitArea', null);
+		}
 	}
 
 	/** Whether this object clips when used as a mask (createjs clips only with a non-empty Graphics) */

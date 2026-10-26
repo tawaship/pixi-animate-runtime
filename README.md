@@ -139,7 +139,7 @@ content's frames.
   `AnimateController`: `new AnimateController(container)` has the `addCreatejs`, `handleTick`, `speed` and
   `overSpeed` of `AnimateContainer`, putting the instances on that container
 
-For Pixim.js applications, use [@tawaship/pixim-animate-runtime](https://github.com/tawaship/pixim-animate-runtime): it
+For Pixim.js applications, use [@tawaship/pixim-animate-runtime](https://github.com/tawaship/Pixim-animate-runtime): it
 includes this player and loads contents as assets of a Pixim content.
 
 With a bundler, import the player instead (`import { loadContentAsync } from '@tawaship/pixi-animate-runtime'`);

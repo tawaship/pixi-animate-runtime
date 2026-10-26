@@ -96,14 +96,17 @@ export declare class Content implements ITextureSource {
     imageAsset(id: string): IImageAsset | null;
     /** The image a frame of a sheet is drawn into for a bitmap fill (named after the atlas and the frame) */
     frameAsset(sheet: string, index: number): IImageAsset | null;
-    /** An instance of a symbol, as `new lib[id]()` */
-    create(id: string): DisplayObject;
     /**
-     * An instance of a symbol to use as a root, set up the way the HTML template
-     * sets up the root it creates (the filter cache handling when the symbol
-     * has a filterCacheList)
+     * An instance of a symbol for the application to place, set up as the HTML
+     * template sets up the root it creates: a clip that re-caches its children's
+     * color effects (it has a filterCacheList) gets the filter cache handling,
+     * which published code otherwise gets from the symbol that creates it (an
+     * instance made by `new lib[id]()` in a frame script gets none, as in
+     * CreateJS). The handling does not change what the player draws (it draws
+     * color effects without caches); it keeps the instance's state the
+     * template's.
      */
-    createRoot(id: string): DisplayObject;
+    create(id: string): DisplayObject;
     private _movieClipClass;
     private _spriteClass;
     private _bitmapClass;

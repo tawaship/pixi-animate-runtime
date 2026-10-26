@@ -224,26 +224,26 @@ export class Content implements ITextureSource {
 		return asset;
 	}
 
-	/** An instance of a symbol, as `new lib[id]()` */
+	/**
+	 * An instance of a symbol for the application to place, set up as the HTML
+	 * template sets up the root it creates: a clip that re-caches its children's
+	 * color effects (it has a filterCacheList) gets the filter cache handling,
+	 * which published code otherwise gets from the symbol that creates it (an
+	 * instance made by `new lib[id]()` in a frame script gets none, as in
+	 * CreateJS). The handling does not change what the player draws (it draws
+	 * color effects without caches); it keeps the instance's state the
+	 * template's.
+	 */
 	create(id: string): DisplayObject {
 		const symbolClass = this.lib[id];
 		if (!symbolClass) {
 			throw new Error('no symbol "' + id + '"');
 		}
-		return new symbolClass();
-	}
-
-	/**
-	 * An instance of a symbol to use as a root, set up the way the HTML template
-	 * sets up the root it creates (the filter cache handling when the symbol
-	 * has a filterCacheList)
-	 */
-	createRoot(id: string): DisplayObject {
-		const root = this.create(id);
-		if (root instanceof MovieClip && root.filterCacheList) {
-			root.addEventListener('tick', handleFilterCache);
+		const instance = new symbolClass();
+		if (instance instanceof MovieClip && instance.filterCacheList) {
+			instance.addEventListener('tick', handleFilterCache);
 		}
-		return root;
+		return instance;
 	}
 
 	private _movieClipClass(def: IRuntimeMovieClipDef): TMovieClipClass {

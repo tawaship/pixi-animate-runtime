@@ -98,7 +98,7 @@ loadContentAsync({ id: '2FA8E0C7230941478CE2CA3DB82DBEDF', basepath: 'assets/ani
 		app.stage.addChild(container);
 		app.ticker.add(container.handleTick, container);
 
-		container.addCreatejs(content.createRoot('game'));   // the symbol the published HTML used as its root
+		container.addCreatejs(content.create('game'));   // the symbol the published HTML used as its root
 	});
 ```
 
@@ -117,8 +117,10 @@ content's frames.
 - The second argument, `{ version }`, adds `_fv=<version>` to every image URL to bypass caches; the query
   Animate adds to each image path on every publish stays
 - An array of targets loads several contents, giving an array of contents
-- `createRoot(id)` creates an instance the way the published HTML creates its root. `content.create(id)`
-  creates a plain instance, and `content.lib` holds the symbol classes (`new content.lib.game()`)
+- `create(id)` creates an instance of any symbol, set up the way the published HTML sets up the root it
+  creates: use it for the instances your application places. `content.lib` holds the symbol classes;
+  `new content.lib.game()` creates an instance the way a frame script does, without that setup (it only
+  matters for color effects, which the player draws the same either way)
 - `container.speed` changes the playback speed (`1` is the published frame rate, `0` stops). When the
   display runs slower than the content, one call plays several frames; set `container.overSpeed = false`
   to play at most one frame per call
@@ -170,6 +172,10 @@ CreateJS-compatible classes), and `lib` (the symbol classes). `exportRoot` and `
   CreateJS mouse events (`mousedown`, `click`, `rollover` and so on) are not called. To react to the
   pointer, listen to PixiJS events on the instance's `pixi` node (`pointerdown`, `pointertap`,
   `pointerover` and so on, with `interactive = true`). Masks are never hit by the pointer
+- Dynamic text is provisional. Lines break as in the published content (see above). Depending on the font,
+  text sits slightly higher than in the published content. Paragraph indents and margins set in Animate are not
+  in the published content and have no effect. `textBaseline` other than `top`, `maxWidth` and `outline` are
+  not checked yet
 - Sound is not played
 - Content that uses the Animate camera ("Advanced Layers") is not supported: delete the camera layer and
   publish again

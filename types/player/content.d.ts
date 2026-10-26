@@ -4,7 +4,7 @@ import { Rectangle } from './geom';
 import { Event, EventDispatcher } from './events';
 import { MovieClip, TScript, TWriter, TMemberWriter } from './movieclip';
 import { Shape, Graphics, Sprite, SpriteSheet, Bitmap, Text, ColorFilter, ButtonHelper, ITextureSource, IImageAsset } from './objects';
-import { IRuntimeData, IRuntimeMovieClipDef, IRuntimeSlotDef, ISpriteDef, IBitmapDef } from './data';
+import { IRuntimeData, IRuntimeMovieClipDef, IRuntimeTweenDef, IRuntimeSlotDef, ISpriteDef, IBitmapDef } from './data';
 export type TMovieClipClass = new (mode?: string | null, startPosition?: number | null, loop?: boolean | number | null) => MovieClip;
 export type TSpriteClass = new () => Sprite;
 export type TBitmapClass = new () => Bitmap;
@@ -87,8 +87,9 @@ export interface IContent {
     create(id: string): DisplayObject;
 }
 /** A MovieClip symbol as the player builds its instances from: its slots with every field */
-interface IMovieClipPlan extends Omit<IRuntimeMovieClipDef, 'slots'> {
+interface IMovieClipPlan extends Omit<IRuntimeMovieClipDef, 'slots' | 'tweens'> {
     slots: IRuntimeSlotDef[];
+    tweens: IRuntimeTweenDef[];
 }
 /**
  * A content: the symbol classes built from generated data, sharing one

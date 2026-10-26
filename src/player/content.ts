@@ -10,7 +10,7 @@ import {
 	ITextureSource, IImageAsset
 } from './objects';
 import {
-	RUNTIME_CONTENT_RANGE, IRuntimeData, IRuntimeMovieClipDef, ISpriteSymbolDef, IBitmapSymbolDef, slotOf,
+	RUNTIME_CONTENT_RANGE, IRuntimeData, IRuntimeMovieClipDef, IRuntimeTweenDef, ISpriteSymbolDef, IBitmapSymbolDef, slotOf, tweenOf, commandsOf,
 	IRuntimeSlotDef, ISpriteDef, IBitmapDef, IRectDef, IStateEntryDef, TTargetDef, TFrameValue, TDataValue
 } from './data';
 
@@ -165,8 +165,9 @@ export interface IContent {
 }
 
 /** A MovieClip symbol as the player builds its instances from: its slots with every field */
-interface IMovieClipPlan extends Omit<IRuntimeMovieClipDef, 'slots'> {
+interface IMovieClipPlan extends Omit<IRuntimeMovieClipDef, 'slots' | 'tweens'> {
 	slots: IRuntimeSlotDef[];
+	tweens: IRuntimeTweenDef[];
 }
 
 /**
@@ -195,7 +196,7 @@ export class Content implements ITextureSource {
 		this.memberWriters = generated.memberWriters;
 
 		this.data.graphics.forEach(def => {
-			this.graphics.push(new Graphics(def.commands, this));
+			this.graphics.push(new Graphics(commandsOf(this.data.commandKinds, def), this));
 		});
 
 		this._applyImages(assets && assets.images ? assets.images : {});
@@ -281,8 +282,9 @@ export class Content implements ITextureSource {
 
 	private _movieClipClass(data: IRuntimeMovieClipDef): TMovieClipClass {
 		const content = this;
-		// The slots filled in once for the symbol, not for every instance
-		const def: IMovieClipPlan = Object.assign({}, data, { slots: data.slots.map(slotOf) });
+		// The slots filled in, and the display lists turned back into entries, once for the symbol, not for every instance
+		const templates = this.data.slotTemplates;
+		const def: IMovieClipPlan = Object.assign({}, data, { slots: data.slots.map(ref => slotOf(templates, ref)), tweens: data.tweens.map(tweenOf) });
 		// The symbol's drawings, from the content's table (shared with every symbol that shows the same drawing)
 		const graphics = def.graphics.map(index => content.graphics[index]);
 		const fps = typeof this.data.properties.fps === 'number' ? this.data.properties.fps : null;

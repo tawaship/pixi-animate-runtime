@@ -210,11 +210,7 @@ const CONVERTER_KNOWN = "0.0.0";
  * Drawings are gathered into one table for the whole content, identical
  * ones merged, and a symbol refers to them by index.
  */
-/**
- * The pixi-animate-runtime versions whose runtime content this player plays
- * (npm's range notation). Raised when the player stops playing runtime
- * content older versions made.
- */
+/** A drawing's commands as the player draws them, from their written form */
 /** The values a slot's fields have when runtime content leaves them out */
 const SLOT_DEFAULTS = {
     symbol: null, mode: null, startPosition: null, loop: null, graphics: null, sprite: null, bitmap: null, text: null,
@@ -469,6 +465,24 @@ function distinctFrames(frames) {
         })
     };
 }
+/**
+ * A tween's distinct values as written: in a display list (the `state` prop),
+ * an entry that places a slot as it is (no props) is written as the slot's
+ * index. The player turns them back into entries once per symbol.
+ */
+function writtenFrames(props, frames) {
+    const distinct = distinctFrames(frames);
+    const state = props.indexOf('state');
+    return {
+        frames: distinct.frames,
+        values: distinct.values.map(frame => frame.map((value, i) => {
+            if (i !== state || !Array.isArray(value)) {
+                return value;
+            }
+            return value.map(entry => entry.target.type === 'slot' && entry.props === null ? entry.target.slot : entry);
+        }))
+    };
+}
 /** A recorded Graphics reference ({ graphics: n }): the value has to be resolved to the instance's Graphics */
 function isGraphicsReference(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -487,13 +501,13 @@ function tweenWriter(props, frames) {
     return 'function (o, v, g) { ' + lines.join(' ') + ' }';
 }
 /**
- * A slot as written in runtime content: the fields at their defaults
- * (SLOT_DEFAULTS) left out, the player filling them in. Its initial values
- * are in its writer only.
+ * A slot's template as written in runtime content: the fields at their
+ * defaults (SLOT_DEFAULTS) left out, the player filling them in. Its initial
+ * values are not in it (the slot gives them).
  */
-function slotData(slot, initWriter, initValues) {
+function slotTemplate(slot, initWriter) {
     const { init, ...fields } = slot;
-    const full = Object.assign({}, fields, { initWriter, initValues });
+    const full = Object.assign({}, fields, { initWriter, initValues: null });
     const data = { kind: full.kind };
     Object.keys(SLOT_DEFAULTS).forEach(key => {
         const value = Reflect.get(full, key);
@@ -502,6 +516,46 @@ function slotData(slot, initWriter, initValues) {
         }
     });
     return data;
+}
+/**
+ * The drawings as written in runtime content: each command as the index of its
+ * kind (its type and the names of its props, written once in commandKinds) and
+ * its props' values, so that no name is written for every command.
+ */
+function writtenGraphics(list) {
+    const commandKinds = [];
+    const indexes = new Map();
+    const graphics = list.map(def => ({
+        commands: def.commands.map(command => {
+            const names = Object.keys(command.props);
+            const key = JSON.stringify([command.type, names]);
+            let index = indexes.get(key);
+            if (index === undefined) {
+                index = commandKinds.push([command.type, names]) - 1;
+                indexes.set(key, index);
+            }
+            const written = [index];
+            return written.concat(names.map(name => command.props[name]));
+        })
+    }));
+    return { graphics, commandKinds };
+}
+/** A table of values written once each, identical ones (compared as JSON) sharing one index */
+class JsonTable {
+    constructor() {
+        this.list = [];
+        this._indexes = new Map();
+    }
+    add(value) {
+        const key = JSON.stringify(value);
+        const known = this._indexes.get(key);
+        if (known !== undefined) {
+            return known;
+        }
+        this.list.push(value);
+        this._indexes.set(key, this.list.length - 1);
+        return this.list.length - 1;
+    }
 }
 /**
  * Initial values a display object of the player already has when it is made
@@ -574,14 +628,16 @@ class GraphicsTable {
         return this.list.length - 1;
     }
 }
-function convertMovieClip(def, scripts, writers, memberWriters, graphicsTable) {
+function convertMovieClip(def, scripts, writers, memberWriters, graphicsTable, slotTemplates) {
     const add = (source) => writers.add(source);
     return {
         kind: def.kind, id: def.id, nominalBounds: def.nominalBounds, frameBounds: def.frameBounds,
         defaults: def.defaults, labels: def.labels, duration: def.duration,
-        slots: def.slots.map(slot => {
+        // A slot is its template (shared by the slots that differ only in their initial values) and its initial values
+        slots: def.slots.map((slot) => {
             const write = initWrite(slot.init);
-            return slotData(slot, write ? add(write.source) : null, write ? write.values : null);
+            const template = slotTemplates.add(slotTemplate(slot, write ? add(write.source) : null));
+            return write ? [template, write.values] : template;
         }),
         memberWriter: def.members.length ? memberWriters.add(memberWriter(def.members)) : null,
         unmanaged: def.unmanaged, graphics: def.graphics.map(g => graphicsTable.add(g)), filterCacheList: def.filterCacheList,
@@ -593,7 +649,7 @@ function convertMovieClip(def, scripts, writers, memberWriters, graphicsTable) {
                 return { position: action.position, script: scripts.length - 1, params: action.params };
             }),
             writer: tween.props.length ? add(tweenWriter(tween.props, tween.frames)) : null
-        }, distinctFrames(tween.frames)))
+        }, writtenFrames(tween.props, tween.frames)))
     };
 }
 /**
@@ -675,17 +731,19 @@ function generate(definition, sourceName) {
     const writers = new CodeTable();
     const memberWriters = new CodeTable();
     const graphicsTable = new GraphicsTable();
+    const slotTemplates = new JsonTable();
     const symbols = {};
     Object.keys(definition.symbols).forEach(key => {
         const def = definition.symbols[key];
-        symbols[key] = def.kind === 'movieclip' ? convertMovieClip(def, scripts, writers, memberWriters, graphicsTable) : def;
+        symbols[key] = def.kind === 'movieclip' ? convertMovieClip(def, scripts, writers, memberWriters, graphicsTable, slotTemplates) : def;
     });
     const data = {
         runtimeVersion: VERSION,
         properties: definition.properties,
         images: definition.manifest.filter(entry => IMAGE_SOURCE.test(entry.src)),
         spriteSheets: definition.spriteSheets,
-        graphics: graphicsTable.list,
+        ...writtenGraphics(graphicsTable.list),
+        slotTemplates: slotTemplates.list,
         symbols
     };
     const source = runtimeContentSource(data, scripts, writers.list, memberWriters.list, id, sourceName || '(unknown)');

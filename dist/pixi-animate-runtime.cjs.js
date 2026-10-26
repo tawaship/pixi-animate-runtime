@@ -2696,21 +2696,53 @@ var VERSION = "0.0.0";
  * Drawings are gathered into one table for the whole content, identical
  * ones merged, and a symbol refers to them by index.
  */
+/** A drawing's commands as the player draws them, from their written form */
+function commandsOf(kinds, graphics) {
+    return graphics.commands.map(function (command) {
+        var kind = kinds[typeof command[0] === 'number' ? command[0] : 0];
+        var props = {};
+        kind[1].forEach(function (name, i) {
+            props[name] = command[i + 1];
+        });
+        return { type: kind[0], props: props };
+    });
+}
 /**
  * The pixi-animate-runtime versions whose runtime content this player plays
  * (npm's range notation). Raised when the player stops playing runtime
  * content older versions made.
  */
 var RUNTIME_CONTENT_RANGE = '0.x';
+/** A display list entry as the player uses it, from its written form */
+function stateEntryOf(entry) {
+    return typeof entry === 'number' ? { target: { type: 'slot', slot: entry }, props: null } : entry;
+}
+/** A tween with its display lists (the values of its `state` prop) as entries */
+function tweenOf(data) {
+    var state = data.props.indexOf('state');
+    return Object.assign({}, data, {
+        values: data.values.map(function (frame) { return frame.map(function (value, i) {
+            if (i === state && Array.isArray(value)) {
+                return value.map(stateEntryOf);
+            }
+            return isFrameValue(value) ? value : null;
+        }); })
+    });
+}
+/** Whether a written value is a frame value as it is (all but a display list with slot indexes) */
+function isFrameValue(value) {
+    return !Array.isArray(value) || value.every(function (entry) { return typeof entry !== 'number'; });
+}
 /** The values a slot's fields have when runtime content leaves them out */
 var SLOT_DEFAULTS = {
     symbol: null, mode: null, startPosition: null, loop: null, graphics: null, sprite: null, bitmap: null, text: null,
     mask: null, hitArea: null, filters: null, cache: null, button: null, filterCacheListener: false, parentSet: false,
     initWriter: null, initValues: null
 };
-/** A slot with the fields runtime content left out at their defaults */
-function slotOf(data) {
-    return Object.assign({}, SLOT_DEFAULTS, data);
+/** A slot from its template (the fields left out at their defaults) and its initial values */
+function slotOf(templates, ref) {
+    var template = templates[typeof ref === 'number' ? ref : ref[0]];
+    return Object.assign({}, SLOT_DEFAULTS, template, { initValues: typeof ref === 'number' ? null : ref[1] });
 }
 
 /**
@@ -2805,7 +2837,7 @@ var Content = function Content(factory, assets) {
     this.writers = generated.writers;
     this.memberWriters = generated.memberWriters;
     this.data.graphics.forEach(function (def) {
-        this$1$1.graphics.push(new Graphics(def.commands, this$1$1));
+        this$1$1.graphics.push(new Graphics(commandsOf(this$1$1.data.commandKinds, def), this$1$1));
     });
     this._applyImages(assets && assets.images ? assets.images : {});
     Object.keys(this.data.symbols).forEach(function (id) {
@@ -2886,8 +2918,9 @@ Content.prototype.create = function create (id) {
 };
 Content.prototype._movieClipClass = function _movieClipClass (data) {
     var content = this;
-    // The slots filled in once for the symbol, not for every instance
-    var def = Object.assign({}, data, { slots: data.slots.map(slotOf) });
+    // The slots filled in, and the display lists turned back into entries, once for the symbol, not for every instance
+    var templates = this.data.slotTemplates;
+    var def = Object.assign({}, data, { slots: data.slots.map(function (ref) { return slotOf(templates, ref); }), tweens: data.tweens.map(tweenOf) });
     // The symbol's drawings, from the content's table (shared with every symbol that shows the same drawing)
     var graphics = def.graphics.map(function (index) { return content.graphics[index]; });
     var fps = typeof this.data.properties.fps === 'number' ? this.data.properties.fps : null;

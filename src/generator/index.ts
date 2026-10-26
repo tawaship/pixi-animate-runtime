@@ -1,11 +1,11 @@
 import * as path from 'path';
 import { extractPublishedFile } from '@tawaship/animate-data-converter';
-import type { IDefinition, IIssue, IMovieClipSymbolDef, IGraphicsDef, IMemberDef, IPropMapDef, ISlotDef, TFrameValue } from '@tawaship/animate-data-converter';
+import type { IDefinition, IIssue, IMovieClipSymbolDef, IGraphicsDef, IMemberDef, IPropMapDef, ISlotDef, TDataValue, TFrameValue } from '@tawaship/animate-data-converter';
 import { checkVersion } from '../player/semver';
 import { VERSION } from '../player/version';
 import { CONVERTER_RANGE, CONVERTER_KNOWN } from './converter-version';
 import { SLOT_DEFAULTS } from '../player/data';
-import type { IRuntimeData, IRuntimeMovieClipDef, IRuntimeSlotDef, TRuntimeSlotData, TRuntimeSymbolDef } from '../player/data';
+import type { IRuntimeData, IRuntimeMovieClipDef, IRuntimeSlotDef, TRuntimeSlotData, TRuntimeSlotRef, TRuntimeSymbolDef, TRuntimeFrameValue, IRuntimeGraphicsData, TRuntimeCommandKind } from '../player/data';
 
 /** Manifest entries kept as images (sounds and other files are left out) */
 const IMAGE_SOURCE = /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i;
@@ -59,6 +59,25 @@ function distinctFrames(frames: TFrameValue[][]): { values: TFrameValue[][]; fra
 	};
 }
 
+/**
+ * A tween's distinct values as written: in a display list (the `state` prop),
+ * an entry that places a slot as it is (no props) is written as the slot's
+ * index. The player turns them back into entries once per symbol.
+ */
+function writtenFrames(props: string[], frames: TFrameValue[][]): { values: TRuntimeFrameValue[][]; frames: number[] } {
+	const distinct = distinctFrames(frames);
+	const state = props.indexOf('state');
+	return {
+		frames: distinct.frames,
+		values: distinct.values.map(frame => frame.map((value, i): TRuntimeFrameValue => {
+			if (i !== state || !Array.isArray(value)) {
+				return value;
+			}
+			return value.map(entry => entry.target.type === 'slot' && entry.props === null ? entry.target.slot : entry);
+		}))
+	};
+}
+
 /** A recorded Graphics reference ({ graphics: n }): the value has to be resolved to the instance's Graphics */
 function isGraphicsReference(value: TFrameValue): boolean {
 	return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -79,13 +98,13 @@ function tweenWriter(props: string[], frames: TFrameValue[][]): string {
 }
 
 /**
- * A slot as written in runtime content: the fields at their defaults
- * (SLOT_DEFAULTS) left out, the player filling them in. Its initial values
- * are in its writer only.
+ * A slot's template as written in runtime content: the fields at their
+ * defaults (SLOT_DEFAULTS) left out, the player filling them in. Its initial
+ * values are not in it (the slot gives them).
  */
-function slotData(slot: ISlotDef, initWriter: number | null, initValues: TFrameValue[] | null): TRuntimeSlotData {
+function slotTemplate(slot: ISlotDef, initWriter: number | null): TRuntimeSlotData {
 	const { init, ...fields } = slot;
-	const full: IRuntimeSlotDef = Object.assign({}, fields, { initWriter, initValues });
+	const full: IRuntimeSlotDef = Object.assign({}, fields, { initWriter, initValues: null });
 	const data: TRuntimeSlotData = { kind: full.kind };
 	Object.keys(SLOT_DEFAULTS).forEach(key => {
 		const value = Reflect.get(full, key);
@@ -94,6 +113,47 @@ function slotData(slot: ISlotDef, initWriter: number | null, initValues: TFrameV
 		}
 	});
 	return data;
+}
+
+/**
+ * The drawings as written in runtime content: each command as the index of its
+ * kind (its type and the names of its props, written once in commandKinds) and
+ * its props' values, so that no name is written for every command.
+ */
+function writtenGraphics(list: IGraphicsDef[]): { graphics: IRuntimeGraphicsData[]; commandKinds: TRuntimeCommandKind[] } {
+	const commandKinds: TRuntimeCommandKind[] = [];
+	const indexes = new Map<string, number>();
+	const graphics = list.map(def => ({
+		commands: def.commands.map(command => {
+			const names = Object.keys(command.props);
+			const key = JSON.stringify([command.type, names]);
+			let index = indexes.get(key);
+			if (index === undefined) {
+				index = commandKinds.push([command.type, names]) - 1;
+				indexes.set(key, index);
+			}
+			const written: TDataValue[] = [index];
+			return written.concat(names.map(name => command.props[name]));
+		})
+	}));
+	return { graphics, commandKinds };
+}
+
+/** A table of values written once each, identical ones (compared as JSON) sharing one index */
+class JsonTable<T> {
+	readonly list: T[] = [];
+	private readonly _indexes = new Map<string, number>();
+
+	add(value: T): number {
+		const key = JSON.stringify(value);
+		const known = this._indexes.get(key);
+		if (known !== undefined) {
+			return known;
+		}
+		this.list.push(value);
+		this._indexes.set(key, this.list.length - 1);
+		return this.list.length - 1;
+	}
 }
 
 /**
@@ -170,14 +230,16 @@ class GraphicsTable {
 	}
 }
 
-function convertMovieClip(def: IMovieClipSymbolDef, scripts: string[], writers: CodeTable, memberWriters: CodeTable, graphicsTable: GraphicsTable): IRuntimeMovieClipDef {
+function convertMovieClip(def: IMovieClipSymbolDef, scripts: string[], writers: CodeTable, memberWriters: CodeTable, graphicsTable: GraphicsTable, slotTemplates: JsonTable<TRuntimeSlotData>): IRuntimeMovieClipDef {
 	const add = (source: string): number => writers.add(source);
 	return {
 		kind: def.kind, id: def.id, nominalBounds: def.nominalBounds, frameBounds: def.frameBounds,
 		defaults: def.defaults, labels: def.labels, duration: def.duration,
-		slots: def.slots.map(slot => {
+		// A slot is its template (shared by the slots that differ only in their initial values) and its initial values
+		slots: def.slots.map((slot): TRuntimeSlotRef => {
 			const write = initWrite(slot.init);
-			return slotData(slot, write ? add(write.source) : null, write ? write.values : null);
+			const template = slotTemplates.add(slotTemplate(slot, write ? add(write.source) : null));
+			return write ? [template, write.values] : template;
 		}),
 		memberWriter: def.members.length ? memberWriters.add(memberWriter(def.members)) : null,
 		unmanaged: def.unmanaged, graphics: def.graphics.map(g => graphicsTable.add(g)), filterCacheList: def.filterCacheList,
@@ -189,7 +251,7 @@ function convertMovieClip(def: IMovieClipSymbolDef, scripts: string[], writers: 
 				return { position: action.position, script: scripts.length - 1, params: action.params };
 			}),
 			writer: tween.props.length ? add(tweenWriter(tween.props, tween.frames)) : null
-		}, distinctFrames(tween.frames)))
+		}, writtenFrames(tween.props, tween.frames)))
 	};
 }
 
@@ -275,10 +337,11 @@ export function generate(definition: IDefinition, sourceName?: string): IGenerat
 	const writers = new CodeTable();
 	const memberWriters = new CodeTable();
 	const graphicsTable = new GraphicsTable();
+	const slotTemplates = new JsonTable<TRuntimeSlotData>();
 	const symbols: { [id: string]: TRuntimeSymbolDef } = {};
 	Object.keys(definition.symbols).forEach(key => {
 		const def = definition.symbols[key];
-		symbols[key] = def.kind === 'movieclip' ? convertMovieClip(def, scripts, writers, memberWriters, graphicsTable) : def;
+		symbols[key] = def.kind === 'movieclip' ? convertMovieClip(def, scripts, writers, memberWriters, graphicsTable, slotTemplates) : def;
 	});
 
 	const data: IRuntimeData = {
@@ -286,7 +349,8 @@ export function generate(definition: IDefinition, sourceName?: string): IGenerat
 		properties: definition.properties,
 		images: definition.manifest.filter(entry => IMAGE_SOURCE.test(entry.src)),
 		spriteSheets: definition.spriteSheets,
-		graphics: graphicsTable.list,
+		...writtenGraphics(graphicsTable.list),
+		slotTemplates: slotTemplates.list,
 		symbols
 	};
 

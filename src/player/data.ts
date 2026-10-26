@@ -11,8 +11,31 @@
 
 import type {
 	IMovieClipSymbolDef, ISpriteSymbolDef, IBitmapSymbolDef, ITweenDef, IPropMapDef, ISlotDef,
-	IManifestEntryDef, ISpriteSheetDef, IGraphicsDef, TFrameValue
+	IManifestEntryDef, ISpriteSheetDef, IGraphicsCommandDef, IStateEntryDef, IDataMap, TDataValue, TFrameValue
 } from '@tawaship/animate-data-converter';
+
+/** A kind of drawing command: its type and the names of its props, in order */
+export type TRuntimeCommandKind = [string, string[]];
+
+/** A drawing command as written in runtime content: the index of its kind, then its props' values in the kind's order */
+export type TRuntimeCommand = TDataValue[];
+
+/** A drawing as written in runtime content */
+export interface IRuntimeGraphicsData {
+	commands: TRuntimeCommand[];
+}
+
+/** A drawing's commands as the player draws them, from their written form */
+export function commandsOf(kinds: TRuntimeCommandKind[], graphics: IRuntimeGraphicsData): IGraphicsCommandDef[] {
+	return graphics.commands.map(command => {
+		const kind = kinds[typeof command[0] === 'number' ? command[0] : 0];
+		const props: IDataMap = {};
+		kind[1].forEach((name, i) => {
+			props[name] = command[i + 1];
+		});
+		return { type: kind[0], props };
+	});
+}
 
 export type {
 	ISlotDef, ITweenDef, IStateEntryDef, IGraphicsDef, IGraphicsCommandDef, ISpriteDef, IBitmapDef,
@@ -54,6 +77,40 @@ export interface IRuntimeTweenDef extends Omit<ITweenDef, 'actions' | 'frames'> 
  * A slot as the player uses it. Its initial values are in code only (the
  * writer), not in the data.
  */
+/**
+ * A frame value as written in runtime content: a display list (`state`) may
+ * give an entry that places a slot as it is (no props) as the slot's index
+ */
+export type TRuntimeFrameValue = TFrameValue | Array<IStateEntryDef | number>;
+
+/** A tween as written in runtime content (stateOf turns its display lists back into entries) */
+export interface IRuntimeTweenData extends Omit<IRuntimeTweenDef, 'values'> {
+	values: TRuntimeFrameValue[][];
+}
+
+/** A display list entry as the player uses it, from its written form */
+function stateEntryOf(entry: IStateEntryDef | number): IStateEntryDef {
+	return typeof entry === 'number' ? { target: { type: 'slot', slot: entry }, props: null } : entry;
+}
+
+/** A tween with its display lists (the values of its `state` prop) as entries */
+export function tweenOf(data: IRuntimeTweenData): IRuntimeTweenDef {
+	const state = data.props.indexOf('state');
+	return Object.assign({}, data, {
+		values: data.values.map(frame => frame.map((value, i): TFrameValue => {
+			if (i === state && Array.isArray(value)) {
+				return value.map(stateEntryOf);
+			}
+			return isFrameValue(value) ? value : null;
+		}))
+	});
+}
+
+/** Whether a written value is a frame value as it is (all but a display list with slot indexes) */
+function isFrameValue(value: TRuntimeFrameValue): value is TFrameValue {
+	return !Array.isArray(value) || value.every(entry => typeof entry !== 'number');
+}
+
 export interface IRuntimeSlotDef extends Omit<ISlotDef, 'init'> {
 	/** Index into the runtime content's writer list: the function that writes the slot's initial values (initValues) */
 	initWriter: number | null;
@@ -68,18 +125,29 @@ export const SLOT_DEFAULTS: Omit<IRuntimeSlotDef, 'kind'> = {
 	initWriter: null, initValues: null
 };
 
-/** A slot as written in runtime content: its kind, and the fields not at their defaults (SLOT_DEFAULTS) */
-export type TRuntimeSlotData = Pick<IRuntimeSlotDef, 'kind'> & Partial<Omit<IRuntimeSlotDef, 'kind'>>;
+/**
+ * A slot template as written in runtime content: its kind, and the fields not
+ * at their defaults (SLOT_DEFAULTS); its initial values are the slot's own
+ */
+export type TRuntimeSlotData = Pick<IRuntimeSlotDef, 'kind'> & Partial<Omit<IRuntimeSlotDef, 'kind' | 'initValues'>>;
 
-/** A slot with the fields runtime content left out at their defaults */
-export function slotOf(data: TRuntimeSlotData): IRuntimeSlotDef {
-	return Object.assign({}, SLOT_DEFAULTS, data);
+/**
+ * A slot as written in a symbol: the index of its template in the content's
+ * slotTemplates, with its initial values when it has some
+ */
+export type TRuntimeSlotRef = number | [number, TFrameValue[]];
+
+/** A slot from its template (the fields left out at their defaults) and its initial values */
+export function slotOf(templates: TRuntimeSlotData[], ref: TRuntimeSlotRef): IRuntimeSlotDef {
+	const template = templates[typeof ref === 'number' ? ref : ref[0]];
+	return Object.assign({}, SLOT_DEFAULTS, template, { initValues: typeof ref === 'number' ? null : ref[1] });
 }
 
 export interface IRuntimeMovieClipDef extends Omit<IMovieClipSymbolDef, 'tweens' | 'slots' | 'graphics' | 'members'> {
-	/** The slots as written (fields at their defaults left out; slotOf fills them in) */
-	slots: TRuntimeSlotData[];
-	tweens: IRuntimeTweenDef[];
+	/** The slots as written (templates and initial values; slotOf makes them whole) */
+	slots: TRuntimeSlotRef[];
+	/** The tweens as written (display lists with slot indexes; tweenOf turns them back into entries) */
+	tweens: IRuntimeTweenData[];
 	/**
 	 * Index into the runtime content's member writer list: the function that
 	 * gives an instance its named children (`this.instance = ...`), or null
@@ -104,7 +172,11 @@ export interface IRuntimeData {
 	images: IManifestEntryDef[];
 	/** The published lib.ssMetadata */
 	spriteSheets: ISpriteSheetDef[];
-	/** Every drawing of the content, identical ones merged (shared by every symbol that shows them) */
-	graphics: IGraphicsDef[];
+	/** Every drawing of the content, identical ones merged (shared by every symbol that shows them); commandsOf reads them */
+	graphics: IRuntimeGraphicsData[];
+	/** The kinds of the drawings' commands (a type and the names of its props) */
+	commandKinds: TRuntimeCommandKind[];
+	/** The slots of every symbol but their initial values, identical ones merged */
+	slotTemplates: TRuntimeSlotData[];
 	symbols: { [id: string]: TRuntimeSymbolDef };
 }

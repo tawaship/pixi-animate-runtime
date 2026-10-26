@@ -18,7 +18,19 @@ export interface IContentTarget {
 	options?: {
 		/** Whether images are requested with CORS (anonymous). true when omitted */
 		crossOrigin?: boolean;
+		/**
+		 * Called with the content's images before they are loaded (a copy for this
+		 * load): changing an entry's src changes what is loaded, such as a data: or
+		 * blob: URL in place of the file
+		 */
+		handleManifest?: (manifest: IContentManifestEntry[]) => Promise<void> | void;
 	};
+}
+
+/** An image of a content: its manifest id and its path (relative to the base path, as published) */
+export interface IContentManifestEntry {
+	id: string;
+	src: string;
 }
 
 export interface ILoadContentOptions {
@@ -89,14 +101,21 @@ export function resolveContentUrl(basepath: string, src: string, version?: strin
 }
 
 /** The images a content loads, with their URLs */
-function imageRequests(content: Content, basepath: string, version?: string | number | null): IContentImageRequest[] {
-	return content.data.images.map(entry => ({ id: entry.id, url: resolveContentUrl(basepath, entry.src, version) }));
+function imageRequests(manifest: IContentManifestEntry[], basepath: string, version?: string | number | null): IContentImageRequest[] {
+	return manifest.map(entry => ({ id: entry.id, url: resolveContentUrl(basepath, entry.src, version) }));
 }
 
 function loadContent(target: IContentTarget, options: ILoadContentOptions): Promise<IContent> {
-	return new Promise<IContent>((resolve, reject) => {
+	return Promise.resolve().then(() => {
 		const content = new Content(getContentFactory(target.id));
-		const requests = imageRequests(content, target.basepath, options.version);
+		const manifest = content.data.images.map(entry => ({ id: entry.id, src: entry.src }));
+		const handleManifest = target.options && target.options.handleManifest;
+		return Promise.resolve(handleManifest ? handleManifest(manifest) : undefined).then(() => loadImages(target, content, imageRequests(manifest, target.basepath, options.version)));
+	});
+}
+
+function loadImages(target: IContentTarget, content: Content, requests: IContentImageRequest[]): Promise<IContent> {
+	return new Promise<IContent>((resolve, reject) => {
 		if (!requests.length) {
 			resolve(contentInterface(content));
 			return;
@@ -104,7 +123,8 @@ function loadContent(target: IContentTarget, options: ILoadContentOptions): Prom
 		const crossOrigin = !target.options || target.options.crossOrigin !== false;
 		const loader = new PIXI.Loader();
 		requests.forEach(request => {
-			loader.add({ name: request.id, url: request.url, crossOrigin: crossOrigin ? 'anonymous' : undefined });
+			// Loaded as images whatever the URL looks like (a blob: URL has no extension to tell)
+			loader.add({ name: request.id, url: request.url, crossOrigin: crossOrigin ? 'anonymous' : undefined, loadType: PIXI.LoaderResource.LOAD_TYPE.IMAGE });
 		});
 		const failed: string[] = [];
 		loader.onError.add((error: Error, _loader: PIXI.Loader, resource: PIXI.LoaderResource) => {

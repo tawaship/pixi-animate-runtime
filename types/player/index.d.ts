@@ -9,9 +9,9 @@ export type { TScript, TWriter, TWrittenValue, ITweenScope, IFilterCacheEntry } 
 export { Shape, Graphics, Sprite, SpriteSheet, Bitmap, Text, ColorFilter, ButtonHelper, GraphicsCommand, GRAPHICS_COMMANDS, PixiGraphics, PixiSprite, PixiText, drawCommands, parseColor, GradientTexture } from './objects';
 export type { ITextureSource, IImageAsset, ISpriteFrame, IButtonTarget, IGradient } from './objects';
 export { Content, tick, resolveState, namespace } from './content';
-export { AnimateContainer } from './animate-container';
+export { AnimateContainer, AnimateController } from './animate-container';
 export { loadContentAsync, getContentFactory, resolveContentUrl, CONTENTS_GLOBAL } from './loader';
-export type { IContentTarget, ILoadContentOptions } from './loader';
+export type { IContentTarget, ILoadContentOptions, IContentManifestEntry } from './loader';
 export type { TContentFactory, IGeneratedContent, IContentAssets, IContent, IContentProperties, TContentProperty, ILibrary, TSymbolClass, TMovieClipClass, TSpriteClass, TBitmapClass, TNamespace, ISilentSound } from './content';
 export { RUNTIME_CONTENT_RANGE } from './data';
 export { VERSION } from './version';

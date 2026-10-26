@@ -15,7 +15,18 @@ export interface IContentTarget {
     options?: {
         /** Whether images are requested with CORS (anonymous). true when omitted */
         crossOrigin?: boolean;
+        /**
+         * Called with the content's images before they are loaded (a copy for this
+         * load): changing an entry's src changes what is loaded, such as a data: or
+         * blob: URL in place of the file
+         */
+        handleManifest?: (manifest: IContentManifestEntry[]) => Promise<void> | void;
     };
+}
+/** An image of a content: its manifest id and its path (relative to the base path, as published) */
+export interface IContentManifestEntry {
+    id: string;
+    src: string;
 }
 export interface ILoadContentOptions {
     /** Added to every image URL as the query `_fv=<version>` (the query an image path already has stays) */

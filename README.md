@@ -114,6 +114,10 @@ content's frames.
 - `basepath` is the directory the content's image paths are relative to: where the runtime content file was
   written, ending with `/`. `options: { crossOrigin: false }` loads the images without CORS (requested with
   CORS, anonymous, by default)
+- `options: { handleManifest(manifest) { ... } }` is called with the content's images (`{ id, src }`, `src` as
+  published) before they are loaded. Changing an entry's `src` changes what this load reads: a `data:` or
+  `blob:` URL is used as it is, another path is resolved against `basepath`. It may return a promise to make the
+  loading wait
 - The second argument, `{ version }`, adds `_fv=<version>` to every image URL to bypass caches; the query
   Animate adds to each image path on every publish stays
 - An array of targets loads several contents, giving an array of contents
@@ -131,6 +135,12 @@ content's frames.
 - A movie clip starts from its first frame when it is put on the container. `removeCreatejs(instance)`
   takes it off, and it stops playing
 - `tick(instance)` plays exactly one frame, for stepping through content by hand
+- To play roots on a container of your own (of another framework built on PixiJS), give it an
+  `AnimateController`: `new AnimateController(container)` has the `addCreatejs`, `handleTick`, `speed` and
+  `overSpeed` of `AnimateContainer`, putting the instances on that container
+
+For Pixim.js applications, use [@tawaship/pixim-animate-runtime](https://github.com/tawaship/pixim-animate-runtime): it
+includes this player and loads contents as assets of a Pixim content.
 
 With a bundler, import the player instead (`import { loadContentAsync } from '@tawaship/pixi-animate-runtime'`);
 the runtime content files are still loaded as scripts.
@@ -207,7 +217,9 @@ The player was developed with Claude (Anthropic's AI assistant). Its correctness
 than on trust in the author: every test content is played both by CreateJS and by this player, and their
 states are compared at every frame (positions, playback, display lists, drawing commands, text, filters,
 masks, buttons), together with what the PixiJS nodes show (their matrices, masks, filters, textures).
-Known faults are put into the player on purpose to confirm that the comparison notices them.
+What is drawn is compared too: every test content is drawn by CreateJS and by this player in the same
+headless browser, frame by frame, and the pixels are compared, with differences in antialiasing allowed for.
+Known faults are put into the player on purpose to confirm that the comparisons notice them.
 
 ## License
 

@@ -3178,93 +3178,127 @@ this.PIXI = this.PIXI || {};
     /** The frame rate a root plays at when its content does not give one */
     var DEFAULT_FPS = 60;
     /**
+     * Plays the content roots put on a Pixi container at their content's frame
+     * rate (the rate the content was published with). AnimateContainer is a Pixi
+     * container with one; a container of another framework can hold one too.
+     *
+     * Each handleTick call adds `delta x speed x fps / 60` to every root (delta
+     * being the ticker's: 1 per frame of a 60 fps display) and plays as many whole
+     * frames as that makes, one frame being createjs's tick phase followed by its
+     * resolve phase. The first call after a root is put on only settles it on its
+     * first frame.
+     */
+    var AnimateController = function AnimateController(container) {
+        /** Playback speed (1 is the content's own frame rate) */
+        this.speed = 1;
+        /** Whether one call may play more than one frame (when the display runs slower than the content) */
+        this.overSpeed = true;
+        this._targets = {};
+        this._nextId = 0;
+        this._container = container;
+    };
+    AnimateController.prototype.handleTick = function handleTick (delta) {
+            var this$1$1 = this;
+
+        var d = delta * this.speed;
+        var targets = this._targets;
+        Object.keys(targets).forEach(function (key) {
+            var target = targets[Number(key)];
+            if (!target) {
+                return;
+            }
+            var fps = target.root.contentFps != null ? target.root.contentFps : DEFAULT_FPS;
+            target.t += d * fps / 60;
+            var whole = target.t | 0;
+            var frames = this$1$1.overSpeed ? whole : Math.min(whole, 1);
+            if (target.isFirst) {
+                target.isFirst = false;
+                resolveState(target.root);
+                return;
+            }
+            target.t -= whole;
+            for (var f = 0; f < frames; f++) {
+                tick(target.root);
+            }
+        });
+    };
+    /** Puts a content object on the container; a MovieClip plays from then on */
+    AnimateController.prototype.addCreatejs = function addCreatejs (obj) {
+        this._register(obj);
+        this._container.addChild(obj.pixi);
+        return obj;
+    };
+    AnimateController.prototype.addCreatejsAt = function addCreatejsAt (obj, index) {
+        this._register(obj);
+        this._container.addChildAt(obj.pixi, index);
+        return obj;
+    };
+    AnimateController.prototype.removeCreatejs = function removeCreatejs (obj) {
+        this._container.removeChild(obj.pixi);
+        return obj;
+    };
+    /**
+     * A MovieClip is played while its node is on the container. Coming from
+     * another parent, it starts over from its first frame.
+     */
+    AnimateController.prototype._register = function _register (obj) {
+            var this$1$1 = this;
+
+        if (!(obj instanceof MovieClip)) {
+            return;
+        }
+        var node = obj.pixi;
+        var previous = node.parent;
+        node.once('added', function () {
+            if (node.parent !== previous) {
+                obj.gotoAndPlay(0);
+            }
+            var id = this$1$1._nextId++;
+            this$1$1._targets[id] = { root: obj, t: 0, isFirst: true };
+            node.once('removed', function () {
+                delete this$1$1._targets[id];
+            });
+        });
+    };
+    /**
      * A Pixi container that plays the content roots put on it at their
-     * content's frame rate (the rate the content was published with).
+     * content's frame rate (see AnimateController).
      *
      * Call handleTick from the application's ticker:
-     * `app.ticker.add(container.handleTick, container)`. Each call adds
-     * `delta x speed x fps / 60` to every root (delta being the ticker's: 1 per
-     * frame of a 60 fps display) and plays as many whole frames as that makes,
-     * one frame being createjs's tick phase followed by its resolve phase. The
-     * first call after a root is put on only settles it on its first frame.
+     * `app.ticker.add(container.handleTick, container)`.
      */
     var AnimateContainer = /*@__PURE__*/(function (superclass) {
         function AnimateContainer() {
             superclass.apply(this, arguments);
-            /** Playback speed (1 is the content's own frame rate) */
-            this.speed = 1;
-            /** Whether one call may play more than one frame (when the display runs slower than the content) */
-            this.overSpeed = true;
-            this._targets = {};
-            this._nextId = 0;
+            this._controller = new AnimateController(this);
         }
 
         if ( superclass ) AnimateContainer.__proto__ = superclass;
         AnimateContainer.prototype = Object.create( superclass && superclass.prototype );
         AnimateContainer.prototype.constructor = AnimateContainer;
-        AnimateContainer.prototype.handleTick = function handleTick (delta) {
-            var this$1$1 = this;
 
-            var d = delta * this.speed;
-            var targets = this._targets;
-            Object.keys(targets).forEach(function (key) {
-                var target = targets[Number(key)];
-                if (!target) {
-                    return;
-                }
-                var fps = target.root.contentFps != null ? target.root.contentFps : DEFAULT_FPS;
-                target.t += d * fps / 60;
-                var whole = target.t | 0;
-                var frames = this$1$1.overSpeed ? whole : Math.min(whole, 1);
-                if (target.isFirst) {
-                    target.isFirst = false;
-                    resolveState(target.root);
-                    return;
-                }
-                target.t -= whole;
-                for (var f = 0; f < frames; f++) {
-                    tick(target.root);
-                }
-            });
+        var prototypeAccessors = { speed: { configurable: true },overSpeed: { configurable: true } };
+        /** Playback speed (1 is the content's own frame rate) */
+        prototypeAccessors.speed.get = function () { return this._controller.speed; };
+        prototypeAccessors.speed.set = function (value) { this._controller.speed = value; };
+        /** Whether one call may play more than one frame (when the display runs slower than the content) */
+        prototypeAccessors.overSpeed.get = function () { return this._controller.overSpeed; };
+        prototypeAccessors.overSpeed.set = function (value) { this._controller.overSpeed = value; };
+        AnimateContainer.prototype.handleTick = function handleTick (delta) {
+            this._controller.handleTick(delta);
         };
         /** Puts a content object on this container; a MovieClip plays from then on */
         AnimateContainer.prototype.addCreatejs = function addCreatejs (obj) {
-            this._register(obj);
-            this.addChild(obj.pixi);
-            return obj;
+            return this._controller.addCreatejs(obj);
         };
         AnimateContainer.prototype.addCreatejsAt = function addCreatejsAt (obj, index) {
-            this._register(obj);
-            this.addChildAt(obj.pixi, index);
-            return obj;
+            return this._controller.addCreatejsAt(obj, index);
         };
         AnimateContainer.prototype.removeCreatejs = function removeCreatejs (obj) {
-            this.removeChild(obj.pixi);
-            return obj;
+            return this._controller.removeCreatejs(obj);
         };
-        /**
-         * A MovieClip is played while its node is on this container. Coming from
-         * another parent, it starts over from its first frame.
-         */
-        AnimateContainer.prototype._register = function _register (obj) {
-            var this$1$1 = this;
 
-            if (!(obj instanceof MovieClip)) {
-                return;
-            }
-            var node = obj.pixi;
-            var previous = node.parent;
-            node.once('added', function () {
-                if (node.parent !== previous) {
-                    obj.gotoAndPlay(0);
-                }
-                var id = this$1$1._nextId++;
-                this$1$1._targets[id] = { root: obj, t: 0, isFirst: true };
-                node.once('removed', function () {
-                    delete this$1$1._targets[id];
-                });
-            });
-        };
+        Object.defineProperties( AnimateContainer.prototype, prototypeAccessors );
 
         return AnimateContainer;
     }(PIXI__namespace.Container));
@@ -3328,13 +3362,19 @@ this.PIXI = this.PIXI || {};
         return version === undefined || version === null || version === '' ? url : withQuery(url, '_fv', String(version));
     }
     /** The images a content loads, with their URLs */
-    function imageRequests(content, basepath, version) {
-        return content.data.images.map(function (entry) { return ({ id: entry.id, url: resolveContentUrl(basepath, entry.src, version) }); });
+    function imageRequests(manifest, basepath, version) {
+        return manifest.map(function (entry) { return ({ id: entry.id, url: resolveContentUrl(basepath, entry.src, version) }); });
     }
     function loadContent(target, options) {
-        return new Promise(function (resolve, reject) {
+        return Promise.resolve().then(function () {
             var content = new Content(getContentFactory(target.id));
-            var requests = imageRequests(content, target.basepath, options.version);
+            var manifest = content.data.images.map(function (entry) { return ({ id: entry.id, src: entry.src }); });
+            var handleManifest = target.options && target.options.handleManifest;
+            return Promise.resolve(handleManifest ? handleManifest(manifest) : undefined).then(function () { return loadImages(target, content, imageRequests(manifest, target.basepath, options.version)); });
+        });
+    }
+    function loadImages(target, content, requests) {
+        return new Promise(function (resolve, reject) {
             if (!requests.length) {
                 resolve(contentInterface(content));
                 return;
@@ -3342,7 +3382,8 @@ this.PIXI = this.PIXI || {};
             var crossOrigin = !target.options || target.options.crossOrigin !== false;
             var loader = new PIXI__namespace.Loader();
             requests.forEach(function (request) {
-                loader.add({ name: request.id, url: request.url, crossOrigin: crossOrigin ? 'anonymous' : undefined });
+                // Loaded as images whatever the URL looks like (a blob: URL has no extension to tell)
+                loader.add({ name: request.id, url: request.url, crossOrigin: crossOrigin ? 'anonymous' : undefined, loadType: PIXI__namespace.LoaderResource.LOAD_TYPE.IMAGE });
             });
             var failed = [];
             loader.onError.add(function (error, _loader, resource) {
@@ -3374,6 +3415,7 @@ this.PIXI = this.PIXI || {};
     }
 
     exports.AnimateContainer = AnimateContainer;
+    exports.AnimateController = AnimateController;
     exports.Bitmap = Bitmap;
     exports.ButtonHelper = ButtonHelper;
     exports.CONTENTS_GLOBAL = CONTENTS_GLOBAL;

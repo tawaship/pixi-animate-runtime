@@ -4,7 +4,7 @@ import { VERSION } from './version';
 import { DisplayObject, Container } from './display';
 import { Rectangle } from './geom';
 import { Event, EventDispatcher } from './events';
-import { MovieClip, Timeline, TweenState, ITweenScope, TScript, TWriter, TWrittenValue } from './movieclip';
+import { MovieClip, Timeline, TweenState, ITweenScope, TScript, TWriter, TMemberWriter, TWrittenValue } from './movieclip';
 import {
 	Shape, Graphics, Sprite, SpriteSheet, Bitmap, Text, ColorFilter, ButtonHelper,
 	ITextureSource, IImageAsset
@@ -78,6 +78,7 @@ export interface IGeneratedContent {
 	data: IRuntimeData;
 	scripts: TScript[];
 	writers: TWriter[];
+	memberWriters: TMemberWriter[];
 }
 
 /**
@@ -172,6 +173,7 @@ export class Content implements ITextureSource {
 	readonly data: IRuntimeData;
 	readonly scripts: TScript[];
 	readonly writers: TWriter[];
+	readonly memberWriters: TMemberWriter[];
 	readonly lib: ILibrary = {};
 	readonly images: { [id: string]: IImageAsset } = {};
 	/** One Graphics per drawing of the content, shared by every symbol that shows it */
@@ -185,6 +187,7 @@ export class Content implements ITextureSource {
 		this.data = generated.data;
 		this.scripts = generated.scripts;
 		this.writers = generated.writers;
+		this.memberWriters = generated.memberWriters;
 
 		this.data.graphics.forEach(def => {
 			this.graphics.push(new Graphics(def.commands, this));
@@ -494,9 +497,9 @@ export class Content implements ITextureSource {
 			});
 		}
 
-		def.members.forEach(member => {
-			Object.defineProperty(self, member.name, { value: slots[member.slot], writable: true, enumerable: true, configurable: true });
-		});
+		if (def.memberWriter !== null) {
+			this.memberWriters[def.memberWriter](self, slots);
+		}
 		def.unmanaged.forEach(index => {
 			self.addChild(slots[index]);
 		});

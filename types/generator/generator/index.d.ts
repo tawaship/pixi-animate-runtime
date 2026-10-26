@@ -9,6 +9,8 @@ export interface IGenerated {
     scripts: string[];
     /** Writer function sources, by the index the data refers to them with */
     writers: string[];
+    /** Member writer function sources, by the index the data refers to them with */
+    memberWriters: string[];
     /** The runtime content (JavaScript source) */
     source: string;
     /** Unsupported features the converter found */

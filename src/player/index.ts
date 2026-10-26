@@ -5,7 +5,7 @@ export type { IOwnedNode, IFilterLike, ICacheState } from './display';
 export { CjsTransform } from './transform';
 export { Rectangle } from './geom';
 export { MovieClip, Timeline, TweenState, INDEPENDENT, SINGLE_FRAME, SYNCHED } from './movieclip';
-export type { TScript, TWriter, TWrittenValue, ITweenScope, IFilterCacheEntry } from './movieclip';
+export type { TScript, TWriter, TMemberWriter, TWrittenValue, ITweenScope, IFilterCacheEntry } from './movieclip';
 export {
 	Shape, Graphics, Sprite, SpriteSheet, Bitmap, Text, ColorFilter, ButtonHelper,
 	GraphicsCommand, GRAPHICS_COMMANDS, PixiGraphics, PixiSprite, PixiText, drawCommands, parseColor, GradientTexture

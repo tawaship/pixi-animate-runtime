@@ -15,6 +15,8 @@ export type TWrittenValue = object | string | number | boolean | null;
  * An initial-value writer has its values in its code and takes the target only.
  */
 export type TWriter = (target: object, values?: TFrameValue[], resolve?: (value: TFrameValue) => TWrittenValue) => void;
+/** Gives an instance its named children: `self.<name> = slots[<slot>]` for each, the names written in the code */
+export type TMemberWriter = (self: object, slots: object[]) => void;
 
 /**
  * What a MovieClip instance needs to play a tween of its symbol: how to find

@@ -2772,6 +2772,7 @@ var Content = function Content(factory, assets) {
     this.data = generated.data;
     this.scripts = generated.scripts;
     this.writers = generated.writers;
+    this.memberWriters = generated.memberWriters;
     this.data.graphics.forEach(function (def) {
         this$1$1.graphics.push(new Graphics(def.commands, this$1$1));
     });
@@ -3074,9 +3075,9 @@ Content.prototype._populate = function _populate (self, def, graphics) {
             };
         });
     }
-    def.members.forEach(function (member) {
-        Object.defineProperty(self, member.name, { value: slots[member.slot], writable: true, enumerable: true, configurable: true });
-    });
+    if (def.memberWriter !== null) {
+        this.memberWriters[def.memberWriter](self, slots);
+    }
     def.unmanaged.forEach(function (index) {
         self.addChild(slots[index]);
     });

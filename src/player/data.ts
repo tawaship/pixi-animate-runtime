@@ -51,9 +51,15 @@ export interface IRuntimeSlotDef extends ISlotDef {
 	initWriter: number | null;
 }
 
-export interface IRuntimeMovieClipDef extends Omit<IMovieClipSymbolDef, 'tweens' | 'slots' | 'graphics'> {
+export interface IRuntimeMovieClipDef extends Omit<IMovieClipSymbolDef, 'tweens' | 'slots' | 'graphics' | 'members'> {
 	slots: IRuntimeSlotDef[];
 	tweens: IRuntimeTweenDef[];
+	/**
+	 * Index into the runtime content's member writer list: the function that
+	 * gives an instance its named children (`this.instance = ...`), or null
+	 * when it has none
+	 */
+	memberWriter: number | null;
 	/**
 	 * The symbol's drawings as indexes into the content's drawing table
 	 * (graphics[n] is the drawing the symbol's slots and tween values call n)

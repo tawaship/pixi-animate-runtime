@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { DisplayObject, Container } from './display';
 import { Rectangle } from './geom';
 import { Event, EventDispatcher } from './events';
-import { MovieClip, TScript, TWriter } from './movieclip';
+import { MovieClip, TScript, TWriter, TMemberWriter } from './movieclip';
 import { Shape, Graphics, Sprite, SpriteSheet, Bitmap, Text, ColorFilter, ButtonHelper, ITextureSource, IImageAsset } from './objects';
 import { IRuntimeData, IRuntimeMovieClipDef, ISpriteDef, IBitmapDef } from './data';
 export type TMovieClipClass = new (mode?: string | null, startPosition?: number | null, loop?: boolean | number | null) => MovieClip;
@@ -50,6 +50,7 @@ export interface IGeneratedContent {
     data: IRuntimeData;
     scripts: TScript[];
     writers: TWriter[];
+    memberWriters: TMemberWriter[];
 }
 /**
  * What runtime content exports: given the names frame scripts refer
@@ -94,6 +95,7 @@ export declare class Content implements ITextureSource {
     readonly data: IRuntimeData;
     readonly scripts: TScript[];
     readonly writers: TWriter[];
+    readonly memberWriters: TMemberWriter[];
     readonly lib: ILibrary;
     readonly images: {
         [id: string]: IImageAsset;

@@ -2257,15 +2257,51 @@ this.PIXI = this.PIXI || {};
     var TEXT_ANCHOR_X = { left: 0, start: 0, center: 0.5, right: 1, end: 1 };
     var TEXT_ANCHOR_Y = { top: 0, hanging: 0, middle: 0.5, alphabetic: 0.8, ideographic: 0.9, bottom: 1 };
     /**
+     * The lines createjs draws a text in (Text._drawText): the text split at line
+     * breaks (CR LF, CR, LF), then a line wider than lineWidth broken at whitespace
+     * only, words added while they fit (a word wider than lineWidth stays whole).
+     * No breaking at all when lineWidth is null.
+     */
+    function breakLines(text, lineWidth, measure) {
+        var lines = [];
+        String(text).split(/(?:\r\n|\r|\n)/).forEach(function (source) {
+            var line = source;
+            if (lineWidth != null && measure(line) > lineWidth) {
+                var words = line.split(/(\s)/);
+                line = words[0];
+                var width = measure(line);
+                for (var i = 1; i < words.length; i += 2) {
+                    var wordWidth = measure(words[i] + words[i + 1]);
+                    if (width + wordWidth > lineWidth) {
+                        lines.push(line);
+                        line = words[i + 1];
+                        width = measure(line);
+                    }
+                    else {
+                        line += words[i] + words[i + 1];
+                        width += wordWidth;
+                    }
+                }
+            }
+            lines.push(line);
+        });
+        return lines;
+    }
+    /**
      * createjs-compatible Text on a Pixi Text.
      */
     var Text = /*@__PURE__*/(function (DisplayObject) {
         function Text(text, font, color) {
             var node = new PixiText('');
+            // Pixi draws text into an image and places that image: at a position between pixels it is
+            // blurred by sampling, where canvas (createjs) draws the glyphs sharp at any position
+            node.roundPixels = true;
             DisplayObject.call(this, node);
             this._text = '';
-            this._font = '10px sans-serif';
-            this._color = '#000';
+            // As createjs: what the constructor is given, kept as given (none: null); drawing falls back to
+            // 10px sans-serif and black
+            this._font = null;
+            this._color = null;
             this._textAlign = 'left';
             this._textBaseline = 'top';
             this._lineHeight = 0;
@@ -2274,12 +2310,8 @@ this.PIXI = this.PIXI || {};
             this._outline = 0;
             this.pixiText = node;
             this._text = text == null ? '' : String(text);
-            if (font) {
-                this._font = font;
-            }
-            if (color) {
-                this._color = color;
-            }
+            this._font = font == null ? null : font;
+            this._color = color == null ? null : color;
             this._updateText();
         }
 
@@ -2308,10 +2340,9 @@ this.PIXI = this.PIXI || {};
         prototypeAccessors$3.outline.set = function (value) { this._outline = value; this._updateText(); };
         Text.prototype._updateText = function _updateText () {
             var node = this.pixiText;
-            var font = parseFont(this._font);
-            var color = parseColor(this._color);
-            node.text = this._text;
-            node.style = new PIXI__namespace.TextStyle({
+            var font = parseFont(this._font || '10px sans-serif');
+            var color = parseColor(this._color || '#000');
+            var style = new PIXI__namespace.TextStyle({
                 fontStyle: font.fontStyle,
                 fontWeight: font.fontWeight,
                 fontSize: font.fontSize,
@@ -2320,10 +2351,14 @@ this.PIXI = this.PIXI || {};
                 stroke: color ? color.color : 0,
                 strokeThickness: this._outline || 0,
                 align: this._textAlign === 'center' ? 'center' : (this._textAlign === 'right' || this._textAlign === 'end') ? 'right' : 'left',
-                lineHeight: this._lineHeight || undefined,
-                wordWrap: !!this._lineWidth,
-                wordWrapWidth: this._lineWidth || 100
+                // Lines are broken here the way createjs breaks them, not by Pixi's word wrap
+                wordWrap: false
             });
+            var measure = function (line) { return PIXI__namespace.TextMetrics.measureText(line, style, false).width; };
+            // createjs's line height when none is set: 1.2 times the width of an M
+            style.lineHeight = this._lineHeight || 1.2 * measure('M');
+            node.style = style;
+            node.text = breakLines(this._text, this._lineWidth, measure).join('\n');
             var anchorX = TEXT_ANCHOR_X[this._textAlign];
             var anchorY = TEXT_ANCHOR_Y[this._textBaseline];
             node.anchor.set(anchorX === undefined ? 0 : anchorX, anchorY === undefined ? 0 : anchorY);

@@ -958,13 +958,46 @@ const TEXT_ANCHOR_X: { [align: string]: number } = { left: 0, start: 0, center: 
 const TEXT_ANCHOR_Y: { [baseline: string]: number } = { top: 0, hanging: 0, middle: 0.5, alphabetic: 0.8, ideographic: 0.9, bottom: 1 };
 
 /**
+ * The lines createjs draws a text in (Text._drawText): the text split at line
+ * breaks (CR LF, CR, LF), then a line wider than lineWidth broken at whitespace
+ * only, words added while they fit (a word wider than lineWidth stays whole).
+ * No breaking at all when lineWidth is null.
+ */
+export function breakLines(text: string, lineWidth: number | null, measure: (line: string) => number): string[] {
+	const lines: string[] = [];
+	String(text).split(/(?:\r\n|\r|\n)/).forEach(source => {
+		let line = source;
+		if (lineWidth != null && measure(line) > lineWidth) {
+			const words = line.split(/(\s)/);
+			line = words[0];
+			let width = measure(line);
+			for (let i = 1; i < words.length; i += 2) {
+				const wordWidth = measure(words[i] + words[i + 1]);
+				if (width + wordWidth > lineWidth) {
+					lines.push(line);
+					line = words[i + 1];
+					width = measure(line);
+				} else {
+					line += words[i] + words[i + 1];
+					width += wordWidth;
+				}
+			}
+		}
+		lines.push(line);
+	});
+	return lines;
+}
+
+/**
  * createjs-compatible Text on a Pixi Text.
  */
 export class Text extends DisplayObject {
 	readonly pixiText: PixiText;
 	private _text = '';
-	private _font = '10px sans-serif';
-	private _color = '#000';
+	// As createjs: what the constructor is given, kept as given (none: null); drawing falls back to
+	// 10px sans-serif and black
+	private _font: string | null = null;
+	private _color: string | null = null;
 	private _textAlign = 'left';
 	private _textBaseline = 'top';
 	private _lineHeight = 0;
@@ -974,24 +1007,23 @@ export class Text extends DisplayObject {
 
 	constructor(text?: string, font?: string, color?: string) {
 		const node = new PixiText('');
+		// Pixi draws text into an image and places that image: at a position between pixels it is
+		// blurred by sampling, where canvas (createjs) draws the glyphs sharp at any position
+		node.roundPixels = true;
 		super(node);
 		this.pixiText = node;
 		this._text = text == null ? '' : String(text);
-		if (font) {
-			this._font = font;
-		}
-		if (color) {
-			this._color = color;
-		}
+		this._font = font == null ? null : font;
+		this._color = color == null ? null : color;
 		this._updateText();
 	}
 
 	get text(): string { return this._text; }
 	set text(value: string) { this._text = value; this._updateText(); }
-	get font(): string { return this._font; }
-	set font(value: string) { this._font = value; this._updateText(); }
-	get color(): string { return this._color; }
-	set color(value: string) { this._color = value; this._updateText(); }
+	get font(): string | null { return this._font; }
+	set font(value: string | null) { this._font = value; this._updateText(); }
+	get color(): string | null { return this._color; }
+	set color(value: string | null) { this._color = value; this._updateText(); }
 	get textAlign(): string { return this._textAlign; }
 	set textAlign(value: string) { this._textAlign = value; this._updateText(); }
 	get textBaseline(): string { return this._textBaseline; }
@@ -1007,10 +1039,9 @@ export class Text extends DisplayObject {
 
 	private _updateText(): void {
 		const node = this.pixiText;
-		const font = parseFont(this._font);
-		const color = parseColor(this._color);
-		node.text = this._text;
-		node.style = new PIXI.TextStyle({
+		const font = parseFont(this._font || '10px sans-serif');
+		const color = parseColor(this._color || '#000');
+		const style = new PIXI.TextStyle({
 			fontStyle: font.fontStyle,
 			fontWeight: font.fontWeight,
 			fontSize: font.fontSize,
@@ -1019,10 +1050,14 @@ export class Text extends DisplayObject {
 			stroke: color ? color.color : 0,
 			strokeThickness: this._outline || 0,
 			align: this._textAlign === 'center' ? 'center' : (this._textAlign === 'right' || this._textAlign === 'end') ? 'right' : 'left',
-			lineHeight: this._lineHeight || undefined,
-			wordWrap: !!this._lineWidth,
-			wordWrapWidth: this._lineWidth || 100
+			// Lines are broken here the way createjs breaks them, not by Pixi's word wrap
+			wordWrap: false
 		});
+		const measure = (line: string): number => PIXI.TextMetrics.measureText(line, style, false).width;
+		// createjs's line height when none is set: 1.2 times the width of an M
+		style.lineHeight = this._lineHeight || 1.2 * measure('M');
+		node.style = style;
+		node.text = breakLines(this._text, this._lineWidth, measure).join('\n');
 		const anchorX = TEXT_ANCHOR_X[this._textAlign];
 		const anchorY = TEXT_ANCHOR_Y[this._textBaseline];
 		node.anchor.set(anchorX === undefined ? 0 : anchorX, anchorY === undefined ? 0 : anchorY);

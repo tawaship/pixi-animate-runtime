@@ -217,6 +217,13 @@ export declare class Bitmap extends DisplayObject {
     toString(): string;
 }
 /**
+ * The lines createjs draws a text in (Text._drawText): the text split at line
+ * breaks (CR LF, CR, LF), then a line wider than lineWidth broken at whitespace
+ * only, words added while they fit (a word wider than lineWidth stays whole).
+ * No breaking at all when lineWidth is null.
+ */
+export declare function breakLines(text: string, lineWidth: number | null, measure: (line: string) => number): string[];
+/**
  * createjs-compatible Text on a Pixi Text.
  */
 export declare class Text extends DisplayObject {
@@ -233,10 +240,10 @@ export declare class Text extends DisplayObject {
     constructor(text?: string, font?: string, color?: string);
     get text(): string;
     set text(value: string);
-    get font(): string;
-    set font(value: string);
-    get color(): string;
-    set color(value: string);
+    get font(): string | null;
+    set font(value: string | null);
+    get color(): string | null;
+    set color(value: string | null);
     get textAlign(): string;
     set textAlign(value: string);
     get textBaseline(): string;

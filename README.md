@@ -108,6 +108,11 @@ shares the drawing.
 Rotation and skew combine the way CreateJS combines them (the object is rotated first and then skewed),
 which matches what the published content shows in a browser.
 
+Dynamic text breaks into lines the way the published content does: a line wider than the text box is broken
+at spaces only, so a long word, or text without spaces such as Japanese, runs past the box. Animate's own
+stage breaks such text inside words, so the two can look different; the player follows the published
+content.
+
 Frame scripts can use the names published code uses: `this`, `cjs` / `createjs` (the player's
 CreateJS-compatible classes), and `lib` (the symbol classes). `exportRoot` and `stage` are undefined.
 `playSound()` plays nothing.

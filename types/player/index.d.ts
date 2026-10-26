@@ -10,6 +10,8 @@ export { Shape, Graphics, Sprite, SpriteSheet, Bitmap, Text, ColorFilter, Button
 export type { ITextureSource, IImageAsset, ISpriteFrame, IButtonTarget, IGradient } from './objects';
 export { Content, createContent, tick, resolveState, namespace } from './content';
 export { AnimateContainer } from './animate-container';
+export { loadContentAsync, getContentFactory, resolveContentUrl, contentImageRequests, CONTENTS_GLOBAL } from './loader';
+export type { IContentTarget, ILoadContentOptions, IContentImageRequest } from './loader';
 export type { TContentFactory, IGeneratedContent, IContentAssets, ILibrary, TSymbolClass, TMovieClipClass, TSpriteClass, TBitmapClass, TNamespace, ISilentSound } from './content';
 export { RUNTIME_CONTENT_RANGE } from './data';
 export { VERSION } from './version';

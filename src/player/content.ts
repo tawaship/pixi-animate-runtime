@@ -165,15 +165,7 @@ export class Content implements ITextureSource {
 			this.graphics.push(new Graphics(def.commands, this));
 		});
 
-		const textures = assets && assets.images ? assets.images : {};
-		this.data.images.forEach(entry => {
-			const texture = textures[entry.id];
-			this.images[entry.id] = { src: entry.src, texture: texture || PIXI.Texture.EMPTY };
-		});
-		this.data.spriteSheets.forEach(sheet => {
-			const image = this.images[sheet.name] || { src: sheet.name, texture: PIXI.Texture.EMPTY };
-			this.spriteSheets[sheet.name] = new SpriteSheet(image, sheet.frames.map(numbers));
-		});
+		this._applyImages(assets && assets.images ? assets.images : {});
 
 		Object.keys(this.data.symbols).forEach(id => {
 			const def = this.data.symbols[id];
@@ -184,6 +176,22 @@ export class Content implements ITextureSource {
 			} else if (def.kind === 'bitmap') {
 				this.lib[id] = this._bitmapClass(def);
 			}
+		});
+	}
+
+	/**
+	 * Sets the textures of the content's images (by manifest id) and the sprite
+	 * sheets cut from them. Done before any instance is made: the constructor's
+	 * assets, or the textures a loader read for the content afterwards.
+	 */
+	_applyImages(textures: { [id: string]: PIXI.Texture }): void {
+		this.data.images.forEach(entry => {
+			const texture = textures[entry.id];
+			this.images[entry.id] = { src: entry.src, texture: texture || PIXI.Texture.EMPTY };
+		});
+		this.data.spriteSheets.forEach(sheet => {
+			const image = this.images[sheet.name] || { src: sheet.name, texture: PIXI.Texture.EMPTY };
+			this.spriteSheets[sheet.name] = new SpriteSheet(image, sheet.frames.map(numbers));
 		});
 	}
 

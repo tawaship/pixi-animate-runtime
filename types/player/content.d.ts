@@ -83,6 +83,14 @@ export declare class Content implements ITextureSource {
     };
     private readonly _frameAssets;
     constructor(factory: TContentFactory, assets?: IContentAssets);
+    /**
+     * Sets the textures of the content's images (by manifest id) and the sprite
+     * sheets cut from them. Done before any instance is made: the constructor's
+     * assets, or the textures a loader read for the content afterwards.
+     */
+    _applyImages(textures: {
+        [id: string]: PIXI.Texture;
+    }): void;
     image(id: string): PIXI.Texture | null;
     frame(sheet: string, index: number): PIXI.Texture | null;
     imageAsset(id: string): IImageAsset | null;

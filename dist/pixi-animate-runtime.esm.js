@@ -2774,15 +2774,7 @@ var Content = function Content(factory, assets) {
     this.data.graphics.forEach(function (def) {
         this$1$1.graphics.push(new Graphics(def.commands, this$1$1));
     });
-    var textures = assets && assets.images ? assets.images : {};
-    this.data.images.forEach(function (entry) {
-        var texture = textures[entry.id];
-        this$1$1.images[entry.id] = { src: entry.src, texture: texture || PIXI.Texture.EMPTY };
-    });
-    this.data.spriteSheets.forEach(function (sheet) {
-        var image = this$1$1.images[sheet.name] || { src: sheet.name, texture: PIXI.Texture.EMPTY };
-        this$1$1.spriteSheets[sheet.name] = new SpriteSheet(image, sheet.frames.map(numbers));
-    });
+    this._applyImages(assets && assets.images ? assets.images : {});
     Object.keys(this.data.symbols).forEach(function (id) {
         var def = this$1$1.data.symbols[id];
         if (def.kind === 'movieclip') {
@@ -2794,6 +2786,23 @@ var Content = function Content(factory, assets) {
         else if (def.kind === 'bitmap') {
             this$1$1.lib[id] = this$1$1._bitmapClass(def);
         }
+    });
+};
+/**
+ * Sets the textures of the content's images (by manifest id) and the sprite
+ * sheets cut from them. Done before any instance is made: the constructor's
+ * assets, or the textures a loader read for the content afterwards.
+ */
+Content.prototype._applyImages = function _applyImages (textures) {
+        var this$1$1 = this;
+
+    this.data.images.forEach(function (entry) {
+        var texture = textures[entry.id];
+        this$1$1.images[entry.id] = { src: entry.src, texture: texture || PIXI.Texture.EMPTY };
+    });
+    this.data.spriteSheets.forEach(function (sheet) {
+        var image = this$1$1.images[sheet.name] || { src: sheet.name, texture: PIXI.Texture.EMPTY };
+        this$1$1.spriteSheets[sheet.name] = new SpriteSheet(image, sheet.frames.map(numbers));
     });
 };
 Content.prototype.image = function image (id) {
@@ -3221,5 +3230,109 @@ var AnimateContainer = /*@__PURE__*/(function (superclass) {
     return AnimateContainer;
 }(PIXI.Container));
 
-export { AnimateContainer, Bitmap, ButtonHelper, CjsTransform, ColorFilter, Container, Content, DisplayObject, Event, EventDispatcher, GRAPHICS_COMMANDS, GradientTexture, Graphics, GraphicsCommand, INDEPENDENT, MovieClip, PixiContainer, PixiGraphics, PixiSprite, PixiText, RUNTIME_CONTENT_RANGE, Rectangle, SINGLE_FRAME, SYNCHED, Shape, Sprite, SpriteSheet, Text, Timeline, TweenState, VERSION, checkVersion, compareVersions, createContent, drawCommands, namespace, parseColor, parseVersion, resolveState, satisfies, tick };
+/**
+ * The global runtime content files register their factories in, by
+ * composition id: `window.PixiAnimateRuntimeContents[id] = factory`. It is not
+ * under the player's namespace, so that a runtime content file can be loaded
+ * before the player, and the same file serves every player package.
+ */
+var CONTENTS_GLOBAL = 'PixiAnimateRuntimeContents';
+/** The factories registered so far (none when no runtime content file was loaded) */
+function registeredContents() {
+    var contents = Reflect.get(window, CONTENTS_GLOBAL);
+    return contents !== null && typeof contents === 'object' ? contents : null;
+}
+function describeRegistered(contents) {
+    if (!contents || !Object.keys(contents).length) {
+        return 'none is loaded';
+    }
+    return 'loaded: ' + Object.keys(contents).map(function (id) {
+        var source = Reflect.get(Reflect.get(contents, id), 'source');
+        return JSON.stringify(id) + (typeof source === 'string' ? ' (' + source + ')' : '');
+    }).join(', ');
+}
+/**
+ * The factory a runtime content file registered under a composition id. The
+ * file has to be loaded first (a script tag, or any other way).
+ */
+function getContentFactory(id) {
+    var contents = registeredContents();
+    var found = contents ? Reflect.get(contents, id) : undefined;
+    var factory = typeof found === 'function' ? found : null;
+    if (!factory) {
+        throw new Error('No runtime content ' + JSON.stringify(id) + ' (' + describeRegistered(contents) + '). Load its runtime content file before loading the content.');
+    }
+    return factory;
+}
+/**
+ * A query added to a URL, keeping the queries it has (one of the same name is
+ * replaced). The same as Pixim.js's utils.resolveQuery, so that both players
+ * request the same URL.
+ */
+function withQuery(url, name, value) {
+    var parts = url.split('?');
+    var kept = parts[1] ? parts[1].split('&').filter(function (query) { return query.split('=')[0] !== name; }) : [];
+    kept.push(name + '=' + value);
+    return parts[0] + '?' + kept.join('&');
+}
+/**
+ * The URL of a content's image: its path resolved against the base path, with
+ * the version added as `_fv=<version>` (the query the path already has, such as
+ * the one Animate adds on every publish, stays). data: and blob: URLs are used
+ * as they are. The same as Pixim.js's utils.resolveUri.
+ */
+function resolveContentUrl(basepath, src, version) {
+    if (src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) {
+        return src;
+    }
+    var url = PIXI.utils.url.resolve(basepath, src);
+    return version === undefined || version === null || version === '' ? url : withQuery(url, '_fv', String(version));
+}
+/** The images a content loads, with their URLs */
+function contentImageRequests(content, basepath, version) {
+    return content.data.images.map(function (entry) { return ({ id: entry.id, url: resolveContentUrl(basepath, entry.src, version) }); });
+}
+function loadContent(target, options) {
+    return new Promise(function (resolve, reject) {
+        var content = new Content(getContentFactory(target.id));
+        var requests = contentImageRequests(content, target.basepath, options.version);
+        if (!requests.length) {
+            resolve(content);
+            return;
+        }
+        var crossOrigin = !target.options || target.options.crossOrigin !== false;
+        var loader = new PIXI.Loader();
+        requests.forEach(function (request) {
+            loader.add({ name: request.id, url: request.url, crossOrigin: crossOrigin ? 'anonymous' : undefined });
+        });
+        var failed = [];
+        loader.onError.add(function (error, _loader, resource) {
+            failed.push(resource.url);
+        });
+        loader.load(function (_loader, resources) {
+            if (failed.length) {
+                reject(new Error('Could not load the images of runtime content ' + JSON.stringify(target.id) + ': ' + failed.join(', ')));
+                return;
+            }
+            var textures = {};
+            requests.forEach(function (request) {
+                var resource = resources[request.id];
+                if (resource && resource.texture) {
+                    textures[request.id] = resource.texture;
+                }
+            });
+            content._applyImages(textures);
+            resolve(content);
+        });
+    });
+}
+function loadContentAsync(targets, options) {
+    var opts = options || {};
+    if (Array.isArray(targets)) {
+        return Promise.all(targets.map(function (target) { return loadContent(target, opts); }));
+    }
+    return loadContent(targets, opts);
+}
+
+export { AnimateContainer, Bitmap, ButtonHelper, CONTENTS_GLOBAL, CjsTransform, ColorFilter, Container, Content, DisplayObject, Event, EventDispatcher, GRAPHICS_COMMANDS, GradientTexture, Graphics, GraphicsCommand, INDEPENDENT, MovieClip, PixiContainer, PixiGraphics, PixiSprite, PixiText, RUNTIME_CONTENT_RANGE, Rectangle, SINGLE_FRAME, SYNCHED, Shape, Sprite, SpriteSheet, Text, Timeline, TweenState, VERSION, checkVersion, compareVersions, contentImageRequests, createContent, drawCommands, getContentFactory, loadContentAsync, namespace, parseColor, parseVersion, resolveContentUrl, resolveState, satisfies, tick };
 //# sourceMappingURL=pixi-animate-runtime.esm.js.map

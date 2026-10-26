@@ -13,6 +13,7 @@ import type {
 	IMovieClipSymbolDef, ISpriteSymbolDef, IBitmapSymbolDef, ITweenDef, IPropMapDef, ISlotDef,
 	IManifestEntryDef, ISpriteSheetDef, IGraphicsCommandDef, IStateEntryDef, IDataMap, TDataValue, TFrameValue
 } from '@tawaship/animate-data-converter';
+import { easeOf, TEase } from './ease';
 
 /** A kind of drawing command: its type and the names of its props, in order */
 export type TRuntimeCommandKind = [string, string[]];
@@ -83,9 +84,36 @@ export interface IRuntimeTweenDef extends Omit<ITweenDef, 'actions' | 'frames'> 
  */
 export type TRuntimeFrameValue = TFrameValue | Array<IStateEntryDef | number>;
 
-/** A tween as written in runtime content (stateOf turns its display lists back into entries) */
-export interface IRuntimeTweenData extends Omit<IRuntimeTweenDef, 'values'> {
+/**
+ * A position, or a stretch of positions, of a tween as written in runtime
+ * content: the index of the position's values, or an interpolated stretch
+ * [from, to, length, ease] whose positions run from values[from] toward
+ * values[to] (the position after the stretch) as CreateJS interpolates a
+ * step with that ease (see interpolated)
+ */
+export type TRuntimeFrameRef = number | [number, number, number, string];
+
+/** A tween as written in runtime content (tweenOf makes its values for every position) */
+export interface IRuntimeTweenData extends Omit<IRuntimeTweenDef, 'values' | 'frames'> {
 	values: TRuntimeFrameValue[][];
+	frames: TRuntimeFrameRef[];
+}
+
+/**
+ * The values at a position of a step, as CreateJS's Tween computes them: the
+ * ratio of the position in the step, eased, then each value from its start
+ * toward its end (a value that is not a number, or does not change, keeps its
+ * start until the eased ratio reaches 1).
+ */
+export function interpolated(from: TFrameValue[], to: TFrameValue[], position: number, length: number, ease: TEase | null): TFrameValue[] {
+	let ratio = position / length;
+	if (ease) {
+		ratio = ease(ratio);
+	}
+	return from.map((v0, i) => {
+		const v1 = to[i];
+		return v0 !== v1 && typeof v0 === 'number' && typeof v1 === 'number' ? v0 + (v1 - v0) * ratio : ratio >= 1 ? v1 : v0;
+	});
 }
 
 /** A display list entry as the player uses it, from its written form */
@@ -93,17 +121,31 @@ function stateEntryOf(entry: IStateEntryDef | number): IStateEntryDef {
 	return typeof entry === 'number' ? { target: { type: 'slot', slot: entry }, props: null } : entry;
 }
 
-/** A tween with its display lists (the values of its `state` prop) as entries */
+/**
+ * A tween with the values of every position: its display lists (the values of
+ * its `state` prop) as entries, and its interpolated stretches computed (each
+ * position of a stretch gets values of its own)
+ */
 export function tweenOf(data: IRuntimeTweenData): IRuntimeTweenDef {
 	const state = data.props.indexOf('state');
-	return Object.assign({}, data, {
-		values: data.values.map(frame => frame.map((value, i): TFrameValue => {
-			if (i === state && Array.isArray(value)) {
-				return value.map(stateEntryOf);
-			}
-			return isFrameValue(value) ? value : null;
-		}))
+	const values = data.values.map(frame => frame.map((value, i): TFrameValue => {
+		if (i === state && Array.isArray(value)) {
+			return value.map(stateEntryOf);
+		}
+		return isFrameValue(value) ? value : null;
+	}));
+	const frames: number[] = [];
+	data.frames.forEach(ref => {
+		if (typeof ref === 'number') {
+			frames.push(ref);
+			return;
+		}
+		const ease = easeOf(ref[3]);
+		for (let position = 0; position < ref[2]; position++) {
+			frames.push(values.push(interpolated(values[ref[0]], values[ref[1]], position, ref[2], ease)) - 1);
+		}
 	});
+	return Object.assign({}, data, { values, frames });
 }
 
 /** Whether a written value is a frame value as it is (all but a display list with slot indexes) */

@@ -9,6 +9,7 @@
  * ones merged, and a symbol refers to them by index.
  */
 import type { IMovieClipSymbolDef, ISpriteSymbolDef, IBitmapSymbolDef, ITweenDef, IPropMapDef, ISlotDef, IManifestEntryDef, ISpriteSheetDef, IGraphicsCommandDef, IStateEntryDef, TDataValue, TFrameValue } from '@tawaship/animate-data-converter';
+import { TEase } from './ease';
 /** A kind of drawing command: its type and the names of its props, in order */
 export type TRuntimeCommandKind = [string, string[]];
 /** A drawing command as written in runtime content: the index of its kind, then its props' values in the kind's order */
@@ -55,11 +56,31 @@ export interface IRuntimeTweenDef extends Omit<ITweenDef, 'actions' | 'frames'> 
  * give an entry that places a slot as it is (no props) as the slot's index
  */
 export type TRuntimeFrameValue = TFrameValue | Array<IStateEntryDef | number>;
-/** A tween as written in runtime content (stateOf turns its display lists back into entries) */
-export interface IRuntimeTweenData extends Omit<IRuntimeTweenDef, 'values'> {
+/**
+ * A position, or a stretch of positions, of a tween as written in runtime
+ * content: the index of the position's values, or an interpolated stretch
+ * [from, to, length, ease] whose positions run from values[from] toward
+ * values[to] (the position after the stretch) as CreateJS interpolates a
+ * step with that ease (see interpolated)
+ */
+export type TRuntimeFrameRef = number | [number, number, number, string];
+/** A tween as written in runtime content (tweenOf makes its values for every position) */
+export interface IRuntimeTweenData extends Omit<IRuntimeTweenDef, 'values' | 'frames'> {
     values: TRuntimeFrameValue[][];
+    frames: TRuntimeFrameRef[];
 }
-/** A tween with its display lists (the values of its `state` prop) as entries */
+/**
+ * The values at a position of a step, as CreateJS's Tween computes them: the
+ * ratio of the position in the step, eased, then each value from its start
+ * toward its end (a value that is not a number, or does not change, keeps its
+ * start until the eased ratio reaches 1).
+ */
+export declare function interpolated(from: TFrameValue[], to: TFrameValue[], position: number, length: number, ease: TEase | null): TFrameValue[];
+/**
+ * A tween with the values of every position: its display lists (the values of
+ * its `state` prop) as entries, and its interpolated stretches computed (each
+ * position of a stretch gets values of its own)
+ */
 export declare function tweenOf(data: IRuntimeTweenData): IRuntimeTweenDef;
 export interface IRuntimeSlotDef extends Omit<ISlotDef, 'init'> {
     /** Index into the runtime content's writer list: the function that writes the slot's initial values (initValues) */

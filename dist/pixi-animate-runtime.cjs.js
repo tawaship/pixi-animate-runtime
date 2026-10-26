@@ -2687,6 +2687,99 @@ function checkVersion(version, range, known) {
 var VERSION = "0.0.0";
 
 /**
+ * The eases of CreateJS (createjs.Ease), computed as CreateJS computes them,
+ * by name. Runtime content names the ease of an interpolated stretch of a
+ * tween; the player computes the stretch's values with it once, when a symbol's
+ * class is made. `get:<amount>` is Ease.get(amount) (Animate's classic ease).
+ */
+function powIn(pow) {
+    return function (t) { return Math.pow(t, pow); };
+}
+function powOut(pow) {
+    return function (t) { return 1 - Math.pow(1 - t, pow); };
+}
+function powInOut(pow) {
+    return function (t) { return ((t *= 2) < 1 ? 0.5 * Math.pow(t, pow) : 1 - 0.5 * Math.abs(Math.pow(2 - t, pow))); };
+}
+function backIn(amount) {
+    return function (t) { return t * t * ((amount + 1) * t - amount); };
+}
+function backOut(amount) {
+    return function (t) { return --t * t * ((amount + 1) * t + amount) + 1; };
+}
+function backInOut(amount) {
+    amount *= 1.525;
+    return function (t) { return ((t *= 2) < 1 ? 0.5 * (t * t * ((amount + 1) * t - amount)) : 0.5 * ((t -= 2) * t * ((amount + 1) * t + amount) + 2)); };
+}
+function elasticIn(amplitude, period) {
+    var pi2 = 2 * Math.PI;
+    return function (t) {
+        if (t == 0 || t == 1) {
+            return t;
+        }
+        var s = period / pi2 * Math.asin(1 / amplitude);
+        return -(amplitude * Math.pow(2, 10 * (t -= 1)) * Math.sin((t - s) * pi2 / period));
+    };
+}
+function elasticOut(amplitude, period) {
+    var pi2 = 2 * Math.PI;
+    return function (t) {
+        if (t == 0 || t == 1) {
+            return t;
+        }
+        var s = period / pi2 * Math.asin(1 / amplitude);
+        return amplitude * Math.pow(2, -10 * t) * Math.sin((t - s) * pi2 / period) + 1;
+    };
+}
+function elasticInOut(amplitude, period) {
+    var pi2 = 2 * Math.PI;
+    return function (t) {
+        var s = period / pi2 * Math.asin(1 / amplitude);
+        return (t *= 2) < 1
+            ? -0.5 * (amplitude * Math.pow(2, 10 * (t -= 1)) * Math.sin((t - s) * pi2 / period))
+            : amplitude * Math.pow(2, -10 * (t -= 1)) * Math.sin((t - s) * pi2 / period) * 0.5 + 1;
+    };
+}
+function bounceOut(t) {
+    return 1 / 2.75 > t ? 7.5625 * t * t
+        : 2 / 2.75 > t ? 7.5625 * (t -= 1.5 / 2.75) * t + 0.75
+            : 2.5 / 2.75 > t ? 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375
+                : 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+}
+function bounceIn(t) {
+    return 1 - bounceOut(1 - t);
+}
+/** Ease.get(amount): Animate's classic ease, amount from -1 (in) to 1 (out) */
+function classic(amount) {
+    amount = amount < -1 ? -1 : amount > 1 ? 1 : amount;
+    return function (t) { return (amount == 0 ? t : amount < 0 ? t * (t * -amount + 1 + amount) : t * ((2 - t) * amount + (1 - amount))); };
+}
+var EASES = {
+    linear: function (t) { return t; },
+    quadIn: powIn(2), quadOut: powOut(2), quadInOut: powInOut(2),
+    cubicIn: powIn(3), cubicOut: powOut(3), cubicInOut: powInOut(3),
+    quartIn: powIn(4), quartOut: powOut(4), quartInOut: powInOut(4),
+    quintIn: powIn(5), quintOut: powOut(5), quintInOut: powInOut(5),
+    sineIn: function (t) { return 1 - Math.cos(t * Math.PI / 2); },
+    sineOut: function (t) { return Math.sin(t * Math.PI / 2); },
+    sineInOut: function (t) { return -0.5 * (Math.cos(Math.PI * t) - 1); },
+    backIn: backIn(1.7), backOut: backOut(1.7), backInOut: backInOut(1.7),
+    circIn: function (t) { return -(Math.sqrt(1 - t * t) - 1); },
+    circOut: function (t) { return Math.sqrt(1 - --t * t); },
+    circInOut: function (t) { return ((t *= 2) < 1 ? -0.5 * (Math.sqrt(1 - t * t) - 1) : 0.5 * (Math.sqrt(1 - (t -= 2) * t) + 1)); },
+    bounceIn: bounceIn, bounceOut: bounceOut,
+    bounceInOut: function (t) { return (0.5 > t ? 0.5 * bounceIn(2 * t) : 0.5 * bounceOut(2 * t - 1) + 0.5); },
+    elasticIn: elasticIn(1, 0.3), elasticOut: elasticOut(1, 0.3), elasticInOut: elasticInOut(1, 0.3 * 1.5)
+};
+/** The ease runtime content names (null for a name the player does not know) */
+function easeOf(id) {
+    if (id.indexOf('get:') === 0) {
+        return classic(Number(id.slice(4)));
+    }
+    return Object.prototype.hasOwnProperty.call(EASES, id) ? EASES[id] : null;
+}
+
+/**
  * The data of runtime content (what the generator writes and the player reads): the definition
  * extracted by @tawaship/animate-data-converter, with every frame script
  * taken out of the data and referenced by its index in the runtime content's
@@ -2713,21 +2806,51 @@ function commandsOf(kinds, graphics) {
  * content older versions made.
  */
 var RUNTIME_CONTENT_RANGE = '0.x';
+/**
+ * The values at a position of a step, as CreateJS's Tween computes them: the
+ * ratio of the position in the step, eased, then each value from its start
+ * toward its end (a value that is not a number, or does not change, keeps its
+ * start until the eased ratio reaches 1).
+ */
+function interpolated(from, to, position, length, ease) {
+    var ratio = position / length;
+    if (ease) {
+        ratio = ease(ratio);
+    }
+    return from.map(function (v0, i) {
+        var v1 = to[i];
+        return v0 !== v1 && typeof v0 === 'number' && typeof v1 === 'number' ? v0 + (v1 - v0) * ratio : ratio >= 1 ? v1 : v0;
+    });
+}
 /** A display list entry as the player uses it, from its written form */
 function stateEntryOf(entry) {
     return typeof entry === 'number' ? { target: { type: 'slot', slot: entry }, props: null } : entry;
 }
-/** A tween with its display lists (the values of its `state` prop) as entries */
+/**
+ * A tween with the values of every position: its display lists (the values of
+ * its `state` prop) as entries, and its interpolated stretches computed (each
+ * position of a stretch gets values of its own)
+ */
 function tweenOf(data) {
     var state = data.props.indexOf('state');
-    return Object.assign({}, data, {
-        values: data.values.map(function (frame) { return frame.map(function (value, i) {
-            if (i === state && Array.isArray(value)) {
-                return value.map(stateEntryOf);
-            }
-            return isFrameValue(value) ? value : null;
-        }); })
+    var values = data.values.map(function (frame) { return frame.map(function (value, i) {
+        if (i === state && Array.isArray(value)) {
+            return value.map(stateEntryOf);
+        }
+        return isFrameValue(value) ? value : null;
+    }); });
+    var frames = [];
+    data.frames.forEach(function (ref) {
+        if (typeof ref === 'number') {
+            frames.push(ref);
+            return;
+        }
+        var ease = easeOf(ref[3]);
+        for (var position = 0; position < ref[2]; position++) {
+            frames.push(values.push(interpolated(values[ref[0]], values[ref[1]], position, ref[2], ease)) - 1);
+        }
     });
+    return Object.assign({}, data, { values: values, frames: frames });
 }
 /** Whether a written value is a frame value as it is (all but a display list with slot indexes) */
 function isFrameValue(value) {

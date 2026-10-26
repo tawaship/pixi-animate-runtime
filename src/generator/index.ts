@@ -4,8 +4,9 @@ import type { IDefinition, IIssue, IMovieClipSymbolDef, IGraphicsDef, IMemberDef
 import { checkVersion } from '../player/semver';
 import { VERSION } from '../player/version';
 import { CONVERTER_RANGE, CONVERTER_KNOWN } from './converter-version';
-import { SLOT_DEFAULTS } from '../player/data';
-import type { IRuntimeData, IRuntimeMovieClipDef, IRuntimeSlotDef, TRuntimeSlotData, TRuntimeSlotRef, TRuntimeSymbolDef, TRuntimeFrameValue, IRuntimeGraphicsData, TRuntimeCommandKind } from '../player/data';
+import { SLOT_DEFAULTS, interpolated } from '../player/data';
+import { easeOf, easeIds } from '../player/ease';
+import type { IRuntimeData, IRuntimeMovieClipDef, IRuntimeSlotDef, TRuntimeSlotData, TRuntimeSlotRef, TRuntimeSymbolDef, TRuntimeFrameValue, TRuntimeFrameRef, IRuntimeGraphicsData, TRuntimeCommandKind } from '../player/data';
 
 /** Manifest entries kept as images (sounds and other files are left out) */
 const IMAGE_SOURCE = /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i;
@@ -36,27 +37,54 @@ function access(name: string): string {
 	return IDENTIFIER.test(name) ? 'o.' + name : 'o[' + JSON.stringify(name) + ']';
 }
 
+/** The ease ids tried for a stretch, with their eases (made once) */
+const EASE_CANDIDATES = easeIds().map(id => ({ id, ease: easeOf(id) }));
+
 /**
- * A tween's frame values written once each: the distinct values, and for every
- * position the index of its values. A tween holds its values for many frames
- * (a display list held by wait() is the same list on every frame), and a
- * position still finds its values at once (goto included).
+ * A tween's frame values as written: each step (from one keyframe to the next)
+ * that interpolation reproduces exactly (the player's own interpolated, with
+ * a CreateJS ease, gives every position's values as recorded) is written as a
+ * stretch [from, to, length, ease]; any other position as the index of its
+ * values, written once each. What cannot be reproduced exactly (a motion
+ * guide, a step cut short by a jump) stays as recorded values.
  */
-function distinctFrames(frames: TFrameValue[][]): { values: TFrameValue[][]; frames: number[] } {
+function interpolatedFrames(frames: TFrameValue[][], keyframes: number[]): { values: TFrameValue[][]; frames: TRuntimeFrameRef[] } {
 	const values: TFrameValue[][] = [];
 	const indexes = new Map<string, number>();
-	return {
-		values,
-		frames: frames.map(frame => {
-			const key = JSON.stringify(frame);
-			let index = indexes.get(key);
-			if (index === undefined) {
-				index = values.push(frame) - 1;
-				indexes.set(key, index);
-			}
-			return index;
-		})
+	const indexOf = (frame: TFrameValue[]): number => {
+		const key = JSON.stringify(frame);
+		let index = indexes.get(key);
+		if (index === undefined) {
+			index = values.push(frame) - 1;
+			indexes.set(key, index);
+		}
+		return index;
 	};
+	const last = frames.length - 1;
+	const starts = keyframes.filter((key, i) => key > 0 && key < last && keyframes.indexOf(key) === i).sort((a, b) => a - b);
+	const bounds = [0].concat(starts, [last]);
+	const refs: TRuntimeFrameRef[] = [];
+	for (let i = 0; i + 1 < bounds.length; i++) {
+		const start = bounds[i];
+		const length = bounds[i + 1] - start;
+		const found = length > 1 ? EASE_CANDIDATES.find(candidate => {
+			for (let position = 0; position < length; position++) {
+				if (JSON.stringify(interpolated(frames[start], frames[start + length], position, length, candidate.ease)) !== JSON.stringify(frames[start + position])) {
+					return false;
+				}
+			}
+			return true;
+		}) : undefined;
+		if (found) {
+			refs.push([indexOf(frames[start]), indexOf(frames[start + length]), length, found.id]);
+		} else {
+			for (let position = start; position < start + length; position++) {
+				refs.push(indexOf(frames[position]));
+			}
+		}
+	}
+	refs.push(indexOf(frames[last]));
+	return { values, frames: refs };
 }
 
 /**
@@ -64,8 +92,8 @@ function distinctFrames(frames: TFrameValue[][]): { values: TFrameValue[][]; fra
  * an entry that places a slot as it is (no props) is written as the slot's
  * index. The player turns them back into entries once per symbol.
  */
-function writtenFrames(props: string[], frames: TFrameValue[][]): { values: TRuntimeFrameValue[][]; frames: number[] } {
-	const distinct = distinctFrames(frames);
+function writtenFrames(props: string[], frames: TFrameValue[][], keyframes: number[]): { values: TRuntimeFrameValue[][]; frames: TRuntimeFrameRef[] } {
+	const distinct = interpolatedFrames(frames, keyframes);
 	const state = props.indexOf('state');
 	return {
 		frames: distinct.frames,
@@ -251,7 +279,7 @@ function convertMovieClip(def: IMovieClipSymbolDef, scripts: string[], writers: 
 				return { position: action.position, script: scripts.length - 1, params: action.params };
 			}),
 			writer: tween.props.length ? add(tweenWriter(tween.props, tween.frames)) : null
-		}, writtenFrames(tween.props, tween.frames)))
+		}, writtenFrames(tween.props, tween.frames, tween.keyframes)))
 	};
 }
 

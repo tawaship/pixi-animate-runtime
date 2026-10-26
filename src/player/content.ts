@@ -10,7 +10,7 @@ import {
 	ITextureSource, IImageAsset
 } from './objects';
 import {
-	RUNTIME_CONTENT_RANGE, IRuntimeData, IRuntimeMovieClipDef, ISpriteSymbolDef, IBitmapSymbolDef,
+	RUNTIME_CONTENT_RANGE, IRuntimeData, IRuntimeMovieClipDef, ISpriteSymbolDef, IBitmapSymbolDef, slotOf,
 	IRuntimeSlotDef, ISpriteDef, IBitmapDef, IRectDef, IStateEntryDef, TTargetDef, TFrameValue, TDataValue
 } from './data';
 
@@ -164,6 +164,11 @@ export interface IContent {
 	create(id: string): DisplayObject;
 }
 
+/** A MovieClip symbol as the player builds its instances from: its slots with every field */
+interface IMovieClipPlan extends Omit<IRuntimeMovieClipDef, 'slots'> {
+	slots: IRuntimeSlotDef[];
+}
+
 /**
  * A content: the symbol classes built from generated data, sharing one
  * definition per symbol. Not part of the API: applications get an IContent.
@@ -274,8 +279,10 @@ export class Content implements ITextureSource {
 		return instance;
 	}
 
-	private _movieClipClass(def: IRuntimeMovieClipDef): TMovieClipClass {
+	private _movieClipClass(data: IRuntimeMovieClipDef): TMovieClipClass {
 		const content = this;
+		// The slots filled in once for the symbol, not for every instance
+		const def: IMovieClipPlan = Object.assign({}, data, { slots: data.slots.map(slotOf) });
 		// The symbol's drawings, from the content's table (shared with every symbol that shows the same drawing)
 		const graphics = def.graphics.map(index => content.graphics[index]);
 		const fps = typeof this.data.properties.fps === 'number' ? this.data.properties.fps : null;
@@ -426,11 +433,11 @@ export class Content implements ITextureSource {
 	 * Builds an instance of a MovieClip symbol: what the published
 	 * constructor builds, from the shared definition.
 	 */
-	_populate(self: MovieClip, def: IRuntimeMovieClipDef, graphics: Graphics[]): void {
+	_populate(self: MovieClip, def: IMovieClipPlan, graphics: Graphics[]): void {
 		const slots = def.slots.map(slot => {
 			const obj = this._createSlot(slot, graphics);
 			if (slot.initWriter !== null) {
-				this.writers[slot.initWriter](obj);
+				this.writers[slot.initWriter](obj, slot.initValues === null ? undefined : slot.initValues);
 			}
 			if (slot.parentSet) {
 				obj.parent = self;

@@ -23,21 +23,38 @@ export interface IRuntimeActionDef {
     script: number;
     params: TFrameValue[] | null;
 }
-export interface IRuntimeTweenDef extends Omit<ITweenDef, 'actions'> {
+export interface IRuntimeTweenDef extends Omit<ITweenDef, 'actions' | 'frames'> {
     actions: IRuntimeActionDef[];
+    /** The tween's distinct frame values (each the values of its props, in order) */
+    values: TFrameValue[][];
+    /** For every position, the index of its values in values (a position holding the same values as another shares them) */
+    frames: number[];
     /**
      * Index into the runtime content's writer list: the function that writes a frame's
-     * values (frames[position]) to the target, one property after another by
+     * values (values[frames[position]]) to the target, one property after another by
      * name (null when the tween writes no property)
      */
     writer: number | null;
 }
-export interface IRuntimeSlotDef extends ISlotDef {
-    /** Index into the runtime content's writer list: the function that writes the slot's initial values (init) */
+/**
+ * A slot as the player uses it. Its initial values are in code only (the
+ * writer), not in the data.
+ */
+export interface IRuntimeSlotDef extends Omit<ISlotDef, 'init'> {
+    /** Index into the runtime content's writer list: the function that writes the slot's initial values (initValues) */
     initWriter: number | null;
+    /** The slot's initial values, in the order its writer writes them */
+    initValues: TFrameValue[] | null;
 }
+/** The values a slot's fields have when runtime content leaves them out */
+export declare const SLOT_DEFAULTS: Omit<IRuntimeSlotDef, 'kind'>;
+/** A slot as written in runtime content: its kind, and the fields not at their defaults (SLOT_DEFAULTS) */
+export type TRuntimeSlotData = Pick<IRuntimeSlotDef, 'kind'> & Partial<Omit<IRuntimeSlotDef, 'kind'>>;
+/** A slot with the fields runtime content left out at their defaults */
+export declare function slotOf(data: TRuntimeSlotData): IRuntimeSlotDef;
 export interface IRuntimeMovieClipDef extends Omit<IMovieClipSymbolDef, 'tweens' | 'slots' | 'graphics' | 'members'> {
-    slots: IRuntimeSlotDef[];
+    /** The slots as written (fields at their defaults left out; slotOf fills them in) */
+    slots: TRuntimeSlotData[];
     tweens: IRuntimeTweenDef[];
     /**
      * Index into the runtime content's member writer list: the function that

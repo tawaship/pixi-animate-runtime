@@ -920,7 +920,7 @@ TweenState.prototype._updatePosition = function _updatePosition (jump, end) {
     var def = this.def;
     var position = this.position;
     if (def.writer !== null) {
-        this.scope.writer(def.writer)(this.target, def.frames[position], this.scope.value);
+        this.scope.writer(def.writer)(this.target, def.values[def.frames[position]], this.scope.value);
     }
     // The last step whose start is at or before the position
     var keyframes = def.keyframes;
@@ -2681,6 +2681,16 @@ var VERSION = "0.0.0";
  * content older versions made.
  */
 var RUNTIME_CONTENT_RANGE = '0.x';
+/** The values a slot's fields have when runtime content leaves them out */
+var SLOT_DEFAULTS = {
+    symbol: null, mode: null, startPosition: null, loop: null, graphics: null, sprite: null, bitmap: null, text: null,
+    mask: null, hitArea: null, filters: null, cache: null, button: null, filterCacheListener: false, parentSet: false,
+    initWriter: null, initValues: null
+};
+/** A slot with the fields runtime content left out at their defaults */
+function slotOf(data) {
+    return Object.assign({}, SLOT_DEFAULTS, data);
+}
 
 /**
  * Whether this player plays runtime content: an error when the version of
@@ -2853,8 +2863,10 @@ Content.prototype.create = function create (id) {
     }
     return instance;
 };
-Content.prototype._movieClipClass = function _movieClipClass (def) {
+Content.prototype._movieClipClass = function _movieClipClass (data) {
     var content = this;
+    // The slots filled in once for the symbol, not for every instance
+    var def = Object.assign({}, data, { slots: data.slots.map(slotOf) });
     // The symbol's drawings, from the content's table (shared with every symbol that shows the same drawing)
     var graphics = def.graphics.map(function (index) { return content.graphics[index]; });
     var fps = typeof this.data.properties.fps === 'number' ? this.data.properties.fps : null;
@@ -3012,7 +3024,7 @@ Content.prototype._populate = function _populate (self, def, graphics) {
     var slots = def.slots.map(function (slot) {
         var obj = this$1$1._createSlot(slot, graphics);
         if (slot.initWriter !== null) {
-            this$1$1.writers[slot.initWriter](obj);
+            this$1$1.writers[slot.initWriter](obj, slot.initValues === null ? undefined : slot.initValues);
         }
         if (slot.parentSet) {
             obj.parent = self;

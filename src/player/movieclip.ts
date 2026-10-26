@@ -102,7 +102,7 @@ export class TweenState {
 		const position = this.position;
 
 		if (def.writer !== null) {
-			this.scope.writer(def.writer)(this.target, def.frames[position], this.scope.value);
+			this.scope.writer(def.writer)(this.target, def.values[def.frames[position]], this.scope.value);
 		}
 
 		// The last step whose start is at or before the position

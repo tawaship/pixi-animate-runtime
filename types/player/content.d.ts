@@ -4,7 +4,7 @@ import { Rectangle } from './geom';
 import { Event, EventDispatcher } from './events';
 import { MovieClip, TScript, TWriter, TMemberWriter } from './movieclip';
 import { Shape, Graphics, Sprite, SpriteSheet, Bitmap, Text, ColorFilter, ButtonHelper, ITextureSource, IImageAsset } from './objects';
-import { IRuntimeData, IRuntimeMovieClipDef, ISpriteDef, IBitmapDef } from './data';
+import { IRuntimeData, IRuntimeMovieClipDef, IRuntimeSlotDef, ISpriteDef, IBitmapDef } from './data';
 export type TMovieClipClass = new (mode?: string | null, startPosition?: number | null, loop?: boolean | number | null) => MovieClip;
 export type TSpriteClass = new () => Sprite;
 export type TBitmapClass = new () => Bitmap;
@@ -86,6 +86,10 @@ export interface IContent {
      */
     create(id: string): DisplayObject;
 }
+/** A MovieClip symbol as the player builds its instances from: its slots with every field */
+interface IMovieClipPlan extends Omit<IRuntimeMovieClipDef, 'slots'> {
+    slots: IRuntimeSlotDef[];
+}
 /**
  * A content: the symbol classes built from generated data, sharing one
  * definition per symbol. Not part of the API: applications get an IContent.
@@ -143,7 +147,7 @@ export declare class Content implements ITextureSource {
      * Builds an instance of a MovieClip symbol: what the published
      * constructor builds, from the shared definition.
      */
-    _populate(self: MovieClip, def: IRuntimeMovieClipDef, graphics: Graphics[]): void;
+    _populate(self: MovieClip, def: IMovieClipPlan, graphics: Graphics[]): void;
 }
 /**
  * What the application gets of a content: the content itself stays out of
@@ -162,3 +166,4 @@ export declare function tick(root: DisplayObject, event?: Event): void;
  * reverse order), without playing a frame.
  */
 export declare function resolveState(node: DisplayObject): void;
+export {};

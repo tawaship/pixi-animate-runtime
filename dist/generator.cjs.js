@@ -200,6 +200,28 @@ const VERSION = "0.0.0";
 const CONVERTER_RANGE = "^0.0.0";
 const CONVERTER_KNOWN = "0.0.0";
 
+/**
+ * The data of runtime content (what the generator writes and the player reads): the definition
+ * extracted by @tawaship/animate-data-converter, with every frame script
+ * taken out of the data and referenced by its index in the runtime content's
+ * script list (the scripts themselves are code in the runtime content), and with
+ * the writes of each tween and of each instance's initial values compiled
+ * into writer functions (code in the runtime content as well, referenced by index).
+ * Drawings are gathered into one table for the whole content, identical
+ * ones merged, and a symbol refers to them by index.
+ */
+/**
+ * The pixi-animate-runtime versions whose runtime content this player plays
+ * (npm's range notation). Raised when the player stops playing runtime
+ * content older versions made.
+ */
+/** The values a slot's fields have when runtime content leaves them out */
+const SLOT_DEFAULTS = {
+    symbol: null, mode: null, startPosition: null, loop: null, graphics: null, sprite: null, bitmap: null, text: null,
+    mask: null, hitArea: null, filters: null, cache: null, button: null, filterCacheListener: false, parentSet: false,
+    initWriter: null, initValues: null
+};
+
 const USAGE = [
     'Usage: pixi-animate-runtime [<published directory or file>] [--out-dir <directory>] [--force]',
     '',
@@ -425,6 +447,28 @@ const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 function access(name) {
     return IDENTIFIER.test(name) ? 'o.' + name : 'o[' + JSON.stringify(name) + ']';
 }
+/**
+ * A tween's frame values written once each: the distinct values, and for every
+ * position the index of its values. A tween holds its values for many frames
+ * (a display list held by wait() is the same list on every frame), and a
+ * position still finds its values at once (goto included).
+ */
+function distinctFrames(frames) {
+    const values = [];
+    const indexes = new Map();
+    return {
+        values,
+        frames: frames.map(frame => {
+            const key = JSON.stringify(frame);
+            let index = indexes.get(key);
+            if (index === undefined) {
+                index = values.push(frame) - 1;
+                indexes.set(key, index);
+            }
+            return index;
+        })
+    };
+}
 /** A recorded Graphics reference ({ graphics: n }): the value has to be resolved to the instance's Graphics */
 function isGraphicsReference(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -442,10 +486,48 @@ function tweenWriter(props, frames) {
     });
     return 'function (o, v, g) { ' + lines.join(' ') + ' }';
 }
-/** The writer of a slot's initial values: the values written in the code */
-function initWriter(init) {
-    const lines = Object.keys(init).filter(name => init[name] !== undefined).map(name => access(name) + ' = ' + JSON.stringify(init[name]) + ';');
-    return 'function (o) { ' + lines.join(' ') + ' }';
+/**
+ * A slot as written in runtime content: the fields at their defaults
+ * (SLOT_DEFAULTS) left out, the player filling them in. Its initial values
+ * are in its writer only.
+ */
+function slotData(slot, initWriter, initValues) {
+    const { init, ...fields } = slot;
+    const full = Object.assign({}, fields, { initWriter, initValues });
+    const data = { kind: full.kind };
+    Object.keys(SLOT_DEFAULTS).forEach(key => {
+        const value = Reflect.get(full, key);
+        if (JSON.stringify(value) !== JSON.stringify(Reflect.get(SLOT_DEFAULTS, key))) {
+            Reflect.set(data, key, value);
+        }
+    });
+    return data;
+}
+/**
+ * Initial values a display object of the player already has when it is made
+ * (as a createjs one has): writing them changes nothing, so they are left out.
+ * `name` is not among them: writing null gives the Pixi node the name ''
+ * (its own default is null).
+ */
+const INIT_DEFAULTS = {
+    x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0, skewX: 0, skewY: 0, regX: 0, regY: 0,
+    alpha: 1, visible: true, compositeOperation: null
+};
+/**
+ * The initial values of a slot to write (those not at INIT_DEFAULTS), and the
+ * writer that writes them: one assignment per property, the name written in
+ * the code and the value taken from the values, so that slots setting the
+ * same properties share one writer.
+ */
+function initWrite(init) {
+    const names = Object.keys(init).filter(name => init[name] !== undefined && !(name in INIT_DEFAULTS && init[name] === INIT_DEFAULTS[name]));
+    if (!names.length) {
+        return null;
+    }
+    return {
+        source: 'function (o, v) { ' + names.map((name, i) => access(name) + ' = v[' + i + '];').join(' ') + ' }',
+        values: names.map(name => init[name])
+    };
 }
 /**
  * The member writer of a symbol: one assignment per named child, the name
@@ -460,6 +542,22 @@ function memberWriter(members) {
  * They are compared by their whole command list (no hash, so two different
  * drawings are never taken for one).
  */
+class CodeTable {
+    constructor() {
+        this.list = [];
+        this._indexes = new Map();
+    }
+    /** The index of a function's source: functions written the same are one entry (they hold no state) */
+    add(source) {
+        const known = this._indexes.get(source);
+        if (known !== undefined) {
+            return known;
+        }
+        this.list.push(source);
+        this._indexes.set(source, this.list.length - 1);
+        return this.list.length - 1;
+    }
+}
 class GraphicsTable {
     constructor() {
         this.list = [];
@@ -477,28 +575,25 @@ class GraphicsTable {
     }
 }
 function convertMovieClip(def, scripts, writers, memberWriters, graphicsTable) {
-    const add = (source) => {
-        writers.push(source);
-        return writers.length - 1;
-    };
+    const add = (source) => writers.add(source);
     return {
         kind: def.kind, id: def.id, nominalBounds: def.nominalBounds, frameBounds: def.frameBounds,
         defaults: def.defaults, labels: def.labels, duration: def.duration,
         slots: def.slots.map(slot => {
-            const keys = Object.keys(slot.init);
-            return Object.assign({}, slot, { initWriter: keys.length ? add(initWriter(slot.init)) : null });
+            const write = initWrite(slot.init);
+            return slotData(slot, write ? add(write.source) : null, write ? write.values : null);
         }),
-        memberWriter: def.members.length ? memberWriters.push(memberWriter(def.members)) - 1 : null,
+        memberWriter: def.members.length ? memberWriters.add(memberWriter(def.members)) : null,
         unmanaged: def.unmanaged, graphics: def.graphics.map(g => graphicsTable.add(g)), filterCacheList: def.filterCacheList,
-        tweens: def.tweens.map(tween => ({
-            target: tween.target, duration: tween.duration, props: tween.props, frames: tween.frames,
+        tweens: def.tweens.map(tween => Object.assign({
+            target: tween.target, duration: tween.duration, props: tween.props,
             keyframes: tween.keyframes,
             actions: tween.actions.map(action => {
                 scripts.push(action.source);
                 return { position: action.position, script: scripts.length - 1, params: action.params };
             }),
             writer: tween.props.length ? add(tweenWriter(tween.props, tween.frames)) : null
-        }))
+        }, distinctFrames(tween.frames)))
     };
 }
 /**
@@ -576,8 +671,9 @@ function generate(definition, sourceName) {
     const warnings = checkDefinition(definition);
     const id = compositionId(definition);
     const scripts = [];
-    const writers = [];
-    const memberWriters = [];
+    // Writers written the same (the same values set, the same names given) are written once and shared
+    const writers = new CodeTable();
+    const memberWriters = new CodeTable();
     const graphicsTable = new GraphicsTable();
     const symbols = {};
     Object.keys(definition.symbols).forEach(key => {
@@ -592,8 +688,8 @@ function generate(definition, sourceName) {
         graphics: graphicsTable.list,
         symbols
     };
-    const source = runtimeContentSource(data, scripts, writers, memberWriters, id, sourceName || '(unknown)');
-    return { id, data, scripts, writers, memberWriters, source, issues: definition.issues, warnings };
+    const source = runtimeContentSource(data, scripts, writers.list, memberWriters.list, id, sourceName || '(unknown)');
+    return { id, data, scripts, writers: writers.list, memberWriters: memberWriters.list, source, issues: definition.issues, warnings };
 }
 /**
  * Extracts a published file and generates its runtime content.

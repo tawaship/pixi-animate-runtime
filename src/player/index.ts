@@ -23,4 +23,4 @@ export { RUNTIME_CONTENT_RANGE } from './data';
 export { VERSION } from './version';
 export { parseVersion, compareVersions, satisfies, checkVersion } from './semver';
 export type { IVersionCheck } from './semver';
-export type { IRuntimeData, TRuntimeSymbolDef, IRuntimeMovieClipDef, IRuntimeTweenDef, IRuntimeActionDef, IRuntimeSlotDef } from './data';
+export type { IRuntimeData, TRuntimeSymbolDef, IRuntimeMovieClipDef, IRuntimeTweenDef, IRuntimeActionDef, IRuntimeSlotDef, TRuntimeSlotData } from './data';

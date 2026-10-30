@@ -32,7 +32,21 @@ const USAGE = [
 	'files already in the output directory that this run did not write are listed.'
 ].join('\n');
 
-/** Lists what a plan writes and what it does not (problems, unsupported features and warnings on stderr) */
+/** A composition id as listed: its first characters (the whole id is in the published file and at the top of the runtime content) */
+function shortId(id: string | null): string {
+	return id === null ? '-' : id.length > 8 ? id.slice(0, 8) + '...' : id;
+}
+
+function pad(text: string, width: number): string {
+	return text.length >= width ? text : text + ' '.repeat(width - text.length);
+}
+
+/**
+ * Lists a plan as a table: where from and where to once, then a row for each
+ * published file (its composition id shortened, the number of images, and
+ * whether it is new, replaces a file, or is not written and why).
+ * Unsupported features and warnings go to stderr.
+ */
 function showPlan(plan: IGenerationPlan, force: boolean, cwd: string, io: ICliIO): void {
 	plan.contents.forEach(content => {
 		content.warnings.forEach(warning => {
@@ -41,27 +55,32 @@ function showPlan(plan: IGenerationPlan, force: boolean, cwd: string, io: ICliIO
 		content.issues.forEach(issue => {
 			io.stderr(content.name + ': unsupported: ' + (issue.symbol ? issue.symbol : '(content)') + (issue.slot !== null ? ' slot ' + issue.slot : '') + ': ' + issue.message + '\n');
 		});
-		if (content.problem !== null) {
-			io.stderr(content.name + ': not written: ' + content.problem + (content.issues.length && !force ?' (--force writes it anyway)' : '') + '\n');
-		}
 	});
-	const writes = plan.contents.filter(content => content.problem === null);
-	if (writes.length) {
-		io.stdout('Runtime content to write (from ' + relativePath(cwd, plan.root) + '):\n');
-		writes.forEach(content => {
-			io.stdout('  ' + content.name + ' -> ' + relativePath(cwd, content.out) + '  (composition id ' + content.id +
-				(content.images.length ? ', ' + content.images.length + ' image(s)' : '') + (content.exists ? ', replaces the file there' : '') + ')\n');
-		});
-	}
-	const byId: { [id: string]: string[] } = {};
+	io.stdout('From: ' + relativePath(cwd, plan.root) + '\n');
+	io.stdout('To:   ' + (plan.outDir !== null ? relativePath(cwd, plan.outDir) + '  (each at its path from "From")' : 'generated/ next to each published file') + '\n\n');
+	const header = ['published', 'composition id', 'images', ''];
+	const rows = plan.contents.map(content => [
+		content.name,
+		shortId(content.id),
+		content.images.length ? String(content.images.length) : '',
+		content.problem !== null ? 'not written: ' + content.problem + (content.issues.length && !force ? ' (--force writes it anyway)' : '') : content.exists ? 'replace' : 'new'
+	]);
+	const widths = [0, 1, 2].map(column => Math.max(header[column].length, ...rows.map(row => row[column].length)));
+	[header].concat(rows).forEach(row => {
+		io.stdout(('  ' + pad(row[0], widths[0]) + '  ' + pad(row[1], widths[1]) + '  ' + ' '.repeat(widths[2] - row[2].length) + row[2] + '  ' + row[3]).replace(/\s+$/, '') + '\n');
+	});
+
+	const writes = plan.contents.filter(content => content.problem === null).length;
+	const notWritten = plan.contents.length - writes;
+	const counts: { [id: string]: number } = {};
 	plan.contents.forEach(content => {
 		if (content.id !== null) {
-			(byId[content.id] = byId[content.id] || []).push(content.name);
+			counts[content.id] = (counts[content.id] || 0) + 1;
 		}
 	});
-	Object.keys(byId).filter(id => byId[id].length > 1).forEach(id => {
-		io.stdout('note: ' + byId[id].join(', ') + ' share composition id ' + id + ' (loaded on one page, the later replaces the earlier)\n');
-	});
+	const shared = Object.keys(counts).filter(id => counts[id] > 1).length;
+	io.stdout('\n' + writes + ' to write' + (notWritten ? ', ' + notWritten + ' not written' : '') + '.' +
+		(shared ? ' ' + shared + ' composition id(s) shared by several files (on one page, the later replaces the earlier).' : '') + '\n');
 }
 
 /**

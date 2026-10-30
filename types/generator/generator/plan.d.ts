@@ -45,6 +45,8 @@ export interface IPlannedContent {
 export interface IGenerationPlan {
     /** The directory the names are taken from: the input directory, or the directory of the input file */
     root: string;
+    /** The output directory; null when each content goes into generated/ next to its published file */
+    outDir: string | null;
     /** Every published file found, in order */
     contents: IPlannedContent[];
     /** Files already in the output directories; the ones the plan does not write are left as they are */

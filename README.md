@@ -134,14 +134,25 @@ that no content uses are not copied, and scripts that are not Animate output are
 | `-f, --force` | Writes runtime content even when the content uses features that are not supported |
 | `-h, --help` | Shows the usage |
 
-Before writing anything, the tool lists each published file with where its runtime content goes, its
-composition id, the number of images it uses, and whether it replaces a file already there:
+Before writing anything, the tool lists where it reads from and writes to, then a row for each published file:
+its composition id, the number of images it uses, and whether it is new, replaces a file already there, or is
+not written (and why):
 
 ```
-Runtime content to write (from assets/animates):
-  game.js -> assets/animates/generated/game.js  (composition id 2FA8E0C7230941478CE2CA3DB82DBEDF, 3 image(s))
+From: assets/animates
+To:   generated/ next to each published file
+
+  published  composition id  images
+  game.js    2FA8E0C7...          3  new
+  title.js   D6D50362...          1  replace
+  old.js     B3DEAFD3...             not written: images it uses are missing: images/old_atlas_1.png
+
+2 to write, 1 not written.
 Write these? (y/N):
 ```
+
+Composition ids are shortened in this list; the whole id is in the published file (`lib.properties.id`) and at
+the top of the runtime content file.
 
 Nothing is written unless you answer `y`. Run from a script or CI, where nobody can answer (not a terminal),
 it only lists and writes nothing unless `-y` is given; with `-y`, it asks nothing and writes. Run in a terminal

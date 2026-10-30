@@ -54,6 +54,8 @@ export interface IPlannedContent {
 export interface IGenerationPlan {
 	/** The directory the names are taken from: the input directory, or the directory of the input file */
 	root: string;
+	/** The output directory; null when each content goes into generated/ next to its published file */
+	outDir: string | null;
 	/** Every published file found, in order */
 	contents: IPlannedContent[];
 	/** Files already in the output directories; the ones the plan does not write are left as they are */
@@ -245,7 +247,7 @@ export async function planGeneration(options: IPlanOptions): Promise<IGeneration
 	(outRoot !== null ? [outRoot] : contents.map(content => path.dirname(content.out)).filter((dir, i, all) => all.indexOf(dir) === i)).forEach(dir => {
 		listFiles(dir).forEach(file => existing.push(file));
 	});
-	return { root, contents, existing };
+	return { root, outDir: outRoot, contents, existing };
 }
 
 /**

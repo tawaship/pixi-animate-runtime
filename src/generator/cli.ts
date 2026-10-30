@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { extractPublishedFile } from '@tawaship/animate-data-converter';
 import type { IDefinition } from '@tawaship/animate-data-converter';
-import { generate, compositionId } from './index';
-import type { IGenerated } from './index';
+import { generate, compositionId } from './generate';
+import type { IGenerated } from './generate';
 
 export interface ICliIO {
 	stdout(text: string): void;
@@ -48,6 +48,15 @@ function localImagePath(src: string): string | null {
 		return null;
 	}
 	return src.split('#')[0].split('?')[0];
+}
+
+/** Whether a relative path stays inside a directory (not absolute, and not leading up out of it) */
+function isBelow(dir: string, relativePath: string): boolean {
+	if (path.isAbsolute(relativePath)) {
+		return false;
+	}
+	const fromDir = path.relative(dir, path.resolve(dir, relativePath));
+	return fromDir !== '' && !fromDir.startsWith('..') && !path.isAbsolute(fromDir);
 }
 
 function listFiles(dir: string): string[] {
@@ -127,15 +136,16 @@ export async function runCli(args: string[], io: ICliIO): Promise<number> {
 
 	const sources: ISource[] = [];
 	let failed = false;
-	files.forEach(file => {
+	// One after another: each is run in a sandbox of its own
+	for (const file of files) {
 		try {
-			const definition = extractPublishedFile(file);
+			const definition = await extractPublishedFile(file);
 			sources.push({ file, definition, id: compositionId(definition) });
 		} catch (e) {
 			io.stderr('could not read ' + relative(cwd, file) + ': ' + (e instanceof Error ? e.message : String(e)) + '\n');
 			failed = true;
 		}
-	});
+	}
 	if (!sources.length) {
 		return 2;
 	}
@@ -200,17 +210,27 @@ export async function runCli(args: string[], io: ICliIO): Promise<number> {
 		}
 		const images: string[] = [];
 		const missing: string[] = [];
+		const outside: string[] = [];
 		generated.data.images.forEach(entry => {
 			const local = localImagePath(entry.src);
 			if (local === null) {
 				return;
 			}
-			if (fs.existsSync(path.join(publishedDir, local))) {
+			// Animate writes image paths relative to the published file, below its directory: a path
+			// that leads elsewhere (up out of it, or absolute) is neither read nor copied
+			if (!isBelow(publishedDir, local)) {
+				outside.push(entry.src);
+			} else if (fs.existsSync(path.join(publishedDir, local))) {
 				images.push(local);
 			} else {
 				missing.push(entry.src);
 			}
 		});
+		if (outside.length) {
+			io.stderr(name + ': not written: image paths that lead out of its directory: ' + outside.join(', ') + '\n');
+			failed = true;
+			return;
+		}
 		if (missing.length) {
 			io.stderr(name + ': not written: images it uses are missing: ' + missing.join(', ') + '\n');
 			failed = true;

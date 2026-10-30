@@ -12,7 +12,7 @@
 <li><a href="" aria-current="page">IRuntimeMovieClipDef</a></li></ul>
 <h1>Interface IRuntimeMovieClipDef</h1></div>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">IRuntimeMovieClipDef</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#defaults">defaults</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IInstanceArgsDef</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#duration">duration</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#filtercachelist">filterCacheList</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IFilterCacheEntryDef</span><span class="tsd-signature-symbol">[]</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#framebounds">frameBounds</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IRectDef</span><span class="tsd-signature-symbol">[]</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#graphics">graphics</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#id">id</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#kind">kind</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;movieclip&quot;</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#labels">labels</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ILabelDef</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#memberwriter">memberWriter</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#nominalbounds">nominalBounds</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IRectDef</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#slots">slots</a><span class="tsd-signature-symbol">:</span> <a href="../types/player.TRuntimeSlotRef.html" class="tsd-signature-type tsd-kind-type-alias">TRuntimeSlotRef</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#tweens">tweens</a><span class="tsd-signature-symbol">:</span> <a href="player.IRuntimeTweenData.html" class="tsd-signature-type tsd-kind-interface">IRuntimeTweenData</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#unmanaged">unmanaged</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div>
-<section class="tsd-panel tsd-hierarchy" data-refl="4528">
+<section class="tsd-panel tsd-hierarchy" data-refl="4509">
 <h4>Hierarchy</h4>
 <ul class="tsd-hierarchy">
 <li class="tsd-hierarchy-item"><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">IMovieClipSymbolDef</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">&quot;tweens&quot;</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;slots&quot;</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;graphics&quot;</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;members&quot;</span><span class="tsd-signature-symbol">&gt;</span>
@@ -51,13 +51,15 @@
 </div><aside class="tsd-sources">
 <p>Inherited from Omit.defaults</p>
 <ul>
-<li>Defined in packages/animate-data-converter/types/types.d.ts:229</li></ul></aside></section>
+<li>Defined in packages/animate-data-converter/types/types.d.ts:366</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="duration"><span>duration</span><a href="#duration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">duration</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-kind-property">duration</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+<div class="tsd-comment tsd-typography"><p>Length of its timeline in frames</p>
+</div><aside class="tsd-sources">
 <p>Inherited from Omit.duration</p>
 <ul>
-<li>Defined in packages/animate-data-converter/types/types.d.ts:231</li></ul></aside></section>
+<li>Defined in packages/animate-data-converter/types/types.d.ts:370</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="filtercachelist"><span>filter<wbr/>Cache<wbr/>List</span><a href="#filtercachelist" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">filterCacheList</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IFilterCacheEntryDef</span><span class="tsd-signature-symbol">[]</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></div>
@@ -68,13 +70,15 @@ instance does (see ISlotDef.filterCacheListener)</p>
 </div><aside class="tsd-sources">
 <p>Inherited from Omit.filterCacheList</p>
 <ul>
-<li>Defined in packages/animate-data-converter/types/types.d.ts:247</li></ul></aside></section>
+<li>Defined in packages/animate-data-converter/types/types.d.ts:387</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="framebounds"><span>frame<wbr/>Bounds</span><a href="#framebounds" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">frameBounds</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IRectDef</span><span class="tsd-signature-symbol">[]</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-kind-property">frameBounds</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IRectDef</span><span class="tsd-signature-symbol">[]</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></div>
+<div class="tsd-comment tsd-typography"><p>The bounds of each frame (<code>frameBounds</code>), or null when not published</p>
+</div><aside class="tsd-sources">
 <p>Inherited from Omit.frameBounds</p>
 <ul>
-<li>Defined in packages/animate-data-converter/types/types.d.ts:224</li></ul></aside></section>
+<li>Defined in packages/animate-data-converter/types/types.d.ts:357</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="graphics"><span>graphics</span><a href="#graphics" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">graphics</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></div>
@@ -93,19 +97,23 @@ get an id starting with <code>#</code>.</p>
 </div><aside class="tsd-sources">
 <p>Inherited from Omit.id</p>
 <ul>
-<li>Defined in packages/animate-data-converter/types/types.d.ts:222</li></ul></aside></section>
+<li>Defined in packages/animate-data-converter/types/types.d.ts:353</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="kind"><span>kind</span><a href="#kind" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">kind</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;movieclip&quot;</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-kind-property">kind</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;movieclip&quot;</span></div>
+<div class="tsd-comment tsd-typography"><p>The kind of symbol</p>
+</div><aside class="tsd-sources">
 <p>Inherited from Omit.kind</p>
 <ul>
-<li>Defined in packages/animate-data-converter/types/types.d.ts:227</li></ul></aside></section>
+<li>Defined in packages/animate-data-converter/types/types.d.ts:364</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="labels"><span>labels</span><a href="#labels" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">labels</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ILabelDef</span><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-kind-property">labels</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ILabelDef</span><span class="tsd-signature-symbol">[]</span></div>
+<div class="tsd-comment tsd-typography"><p>Frame labels of its timeline</p>
+</div><aside class="tsd-sources">
 <p>Inherited from Omit.labels</p>
 <ul>
-<li>Defined in packages/animate-data-converter/types/types.d.ts:230</li></ul></aside></section>
+<li>Defined in packages/animate-data-converter/types/types.d.ts:368</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="memberwriter"><span>member<wbr/>Writer</span><a href="#memberwriter" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">memberWriter</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></div>
@@ -117,10 +125,12 @@ when it has none</p>
 <li>Defined in packages/pixi-animate-runtime/src/player/data.ts:198</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="nominalbounds"><span>nominal<wbr/>Bounds</span><a href="#nominalbounds" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">nominalBounds</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IRectDef</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-kind-property">nominalBounds</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IRectDef</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></div>
+<div class="tsd-comment tsd-typography"><p>The bounds published on the symbol (<code>nominalBounds</code>), or null</p>
+</div><aside class="tsd-sources">
 <p>Inherited from Omit.nominalBounds</p>
 <ul>
-<li>Defined in packages/animate-data-converter/types/types.d.ts:223</li></ul></aside></section>
+<li>Defined in packages/animate-data-converter/types/types.d.ts:355</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="slots"><span>slots</span><a href="#slots" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">slots</span><span class="tsd-signature-symbol">:</span> <a href="../types/player.TRuntimeSlotRef.html" class="tsd-signature-type tsd-kind-type-alias">TRuntimeSlotRef</a><span class="tsd-signature-symbol">[]</span></div>
@@ -142,7 +152,7 @@ when it has none</p>
 </div><aside class="tsd-sources">
 <p>Inherited from Omit.unmanaged</p>
 <ul>
-<li>Defined in packages/animate-data-converter/types/types.d.ts:236</li></ul></aside></section></section></details></div>
+<li>Defined in packages/animate-data-converter/types/types.d.ts:376</li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

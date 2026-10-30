@@ -1,27 +1,95 @@
 # @tawaship/pixi-animate-runtime
 
-Plays content published from Adobe Animate for HTML5 Canvas (CreateJS) on PixiJS.
+Plays content made in Adobe Animate (published for HTML5 Canvas) on PixiJS, without CreateJS.
 
-The published JavaScript is converted once, at development time, into a runtime content file that holds one shared
-definition per symbol. The player builds instances from these definitions on PixiJS, without CreateJS and
-without running the published code: creating many instances at once no longer rebuilds each symbol's
-timeline for every instance.
+- **Convert once, at development time**: a command turns the files Animate publishes into an optimized
+  *runtime content* file
+- **Play the runtime content in your PixiJS application**: the player plays it as CreateJS would, without
+  CreateJS and without the published files
+- **What it brings**: creating many instances at once stays light (each symbol is prepared once and shared),
+  playback stays even when frame times vary, and what is played is checked frame by frame against CreateJS
 
-It plays the same content as [@tawaship/pixi-animate-container](https://github.com/tawaship/pixi-animate-container)
-and is used the same way (instances put on a container that the ticker drives); what changes is listed under
-[Coming from pixi-animate-container](#coming-from-pixi-animate-container).
+Coming from [@tawaship/pixi-animate-container](https://github.com/tawaship/pixi-animate-container)? It plays the
+same content and is used the same way; see [Coming from pixi-animate-container](#coming-from-pixi-animate-container).
 
-**Status: under development.** What works and what does not yet is listed under [Current limits](#current-limits).
+**Status: under development.** What does not work yet is listed under [Current limits](#current-limits).
 
 API reference: https://tawaship.github.io/pixi-animate-runtime/docs/
 
 Samples (content published from Animate, played by this package or by CreateJS): https://tawaship.github.io/pixi-animate-runtime/samples/
 
-**Convert only content you trust.** Generating runs the published JavaScript, frame scripts included, in
-Node.js, in a `vm` context that is not a security boundary: code in the file can reach what Node.js can (files,
-commands, the network) with your permissions. Treat a published file as you would treat a script you run:
-convert content published by you or by people you trust. In the browser, the runtime content is as safe as the
-published content would be.
+**Convert only content you trust.** Converting runs the published JavaScript, frame scripts included, to read
+it. It runs in a sandbox (QuickJS, a separate JavaScript engine compiled to WebAssembly) that is given nothing
+of your machine: no files, no commands, no network. Running code is never without risk all the same: a flaw in
+the sandbox or the engines could let code in the file reach further. Convert content published by you or by
+people you trust, and treat content you receive (from a contractor, an asset store and so on) as code you would
+run. In the browser, the runtime content is as safe as the published content would be.
+
+## Quick start
+
+The published files are needed only to convert. Your application ships the runtime content (and the images it
+uses), not the published files. This example keeps them apart:
+
+```
+my-project/
+├─ animate/          what Animate publishes (read when converting; not shipped)
+└─ public/           what the application ships
+   ├─ animates/      the runtime content, written by the command
+   ├─ lib/           PixiJS and the player
+   └─ index.html
+```
+
+1. **Publish from Animate.** In Adobe Animate, publish the document for HTML5 Canvas into `animate/` (you get
+   `game.js`, `game.html` and an `images/` directory).
+
+2. **Install.** In the project (Node.js 18 or later):
+
+   ```
+   npm install pixi.js@5 @tawaship/pixi-animate-runtime
+   ```
+
+   Copy `node_modules/pixi.js/dist/pixi.min.js` and
+   `node_modules/@tawaship/pixi-animate-runtime/dist/pixi-animate-runtime.js` into `public/lib/` (or import the
+   player with a bundler).
+
+3. **Convert.** From the project's root:
+
+   ```
+   npx pixi-animate-runtime animate --out-dir public/animates
+   ```
+
+   This writes `public/animates/game.js` (the runtime content) and copies the images it uses into
+   `public/animates/images/`. It prints the content's **composition id**, which the next step needs.
+
+4. **Play.** In `public/index.html`, load PixiJS, the player and the runtime content, and put the symbol the
+   published HTML showed (named after the published file, here `game`) on an `AnimateContainer`:
+
+   ```html
+   <script src="lib/pixi.min.js"></script>
+   <script src="lib/pixi-animate-runtime.js"></script>
+   <script src="animates/game.js"></script>
+   <script>
+   const app = new PIXI.Application({ width: 550, height: 400 });
+   document.body.appendChild(app.view);
+
+   const { loadContentAsync, AnimateContainer } = PIXI.animateRuntime;
+   loadContentAsync({ id: '<composition id>', basepath: 'animates/' }).then(content => {
+   	const container = new AnimateContainer();
+   	app.stage.addChild(container);
+   	app.ticker.add(container.handleTick, container);
+   	container.addCreatejs(content.create('game'));
+   });
+   </script>
+   ```
+
+   The content plays at the frame rate it was published with.
+
+5. **After publishing again from Animate, run step 3 again.** The player plays the runtime content, never the
+   published files: a change made in Animate shows only once the runtime content is made again.
+
+The sections below explain each step: [Converting published content](#converting-published-content) (options,
+the Windows batch file, the Node API) and [Playing content](#playing-content) (loading options, the container,
+the objects).
 
 ## What you need
 
@@ -61,9 +129,10 @@ to remove when they are no longer needed. Run in a terminal without a directory,
 the published files it found with their composition ids, and asks where to write (empty: `generated/`); a
 directory you name that is not empty is written to only after you answer `y`.
 
-A content is not written when it uses unsupported features (each one is listed) or when an image it uses is
-missing; the other contents still are, and the command then exits with `1`. It exits with `2` when the
-directory or file cannot be read.
+A content is not written when it uses unsupported features (each one is listed), when an image it uses is
+missing, or when the path of an image leads out of the published directory (Animate writes them below it);
+the other contents still are, and the command then exits with `1`. It exits with `2` when the directory or
+file cannot be read.
 
 On Windows, `tools/pixi-animate-runtime.bat` (in the installed package) does the same: copy it into your
 project, then drop the published directory on it, or double-click it to be asked.
@@ -73,13 +142,18 @@ The same is available from Node:
 ```js
 const { generateFromPublishedFile } = require('@tawaship/pixi-animate-runtime/generator');
 
-const generated = generateFromPublishedFile('assets/animates/game.js');
-require('fs').writeFileSync('game.js', generated.source);
+generateFromPublishedFile('assets/animates/game.js').then(generated => {
+	require('fs').writeFileSync('game.js', generated.source);
+});
 ```
 
 `generated.id` is the content's composition id, `generated.data` its data, `generated.issues` lists
 unsupported features and `generated.warnings` what to look at (see [Versions](#versions)). Images are not
 copied by this function.
+
+`generate(definition)` makes the runtime content from a definition you already have, in the form
+`@tawaship/animate-data-converter` extracts it (its compact form). An expanded definition (written with
+`--expanded`, or made with `expand()`) is refused: turn it back with the converter's `compact()` first.
 
 Frame scripts are copied into the runtime content as they were published, as code. Nothing is rewritten
 (a `console.log` left in a script stays), and the runtime content needs no `eval` at run time.
@@ -251,6 +325,19 @@ What behaves differently:
 - Sound is not played
 - Content that uses the Animate camera ("Advanced Layers") is not supported: delete the camera layer and
   publish again
+
+## How it works
+
+Published content defines each symbol as a class whose constructor builds its children and its whole timeline,
+for every instance. The command runs the published code once, at development time (in its sandbox, with
+`@tawaship/animate-data-converter`), and records each symbol as data: the display objects it owns and the
+value of every property its timeline sets, at every frame. The runtime content holds that data, written
+compactly, and the frame scripts as code.
+
+The player builds every instance of a symbol from the same data, so creating many instances at once does not
+build a timeline for each, and it needs neither CreateJS nor the published code. It plays the frames as CreateJS
+does: tests play every test content on both, frame by frame (see
+[How correctness is checked](#how-correctness-is-checked)).
 
 ## Versions
 

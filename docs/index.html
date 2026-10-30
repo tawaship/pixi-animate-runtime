@@ -9,22 +9,70 @@
 <div class="tsd-page-title">
 <h1>@tawaship/pixi-animate-runtime - v0.1.0</h1></div>
 <div class="tsd-panel tsd-typography"><h1 id="tawashippixi-animate-runtime" class="tsd-anchor-link">@tawaship/pixi-animate-runtime<a href="#tawashippixi-animate-runtime" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
-<p>Plays content published from Adobe Animate for HTML5 Canvas (CreateJS) on PixiJS.</p>
-<p>The published JavaScript is converted once, at development time, into a runtime content file that holds one shared
-definition per symbol. The player builds instances from these definitions on PixiJS, without CreateJS and
-without running the published code: creating many instances at once no longer rebuilds each symbol's
-timeline for every instance.</p>
-<p>It plays the same content as <a href="https://github.com/tawaship/pixi-animate-container">@tawaship/pixi-animate-container</a>
-and is used the same way (instances put on a container that the ticker drives); what changes is listed under
-<a href="#coming-from-pixi-animate-container">Coming from pixi-animate-container</a>.</p>
-<p><strong>Status: under development.</strong> What works and what does not yet is listed under <a href="#current-limits">Current limits</a>.</p>
+<p>Plays content made in Adobe Animate (published for HTML5 Canvas) on PixiJS, without CreateJS.</p>
+<ul>
+<li><strong>Convert once, at development time</strong>: a command turns the files Animate publishes into an optimized
+<em>runtime content</em> file</li>
+<li><strong>Play the runtime content in your PixiJS application</strong>: the player plays it as CreateJS would, without
+CreateJS and without the published files</li>
+<li><strong>What it brings</strong>: creating many instances at once stays light (each symbol is prepared once and shared),
+playback stays even when frame times vary, and what is played is checked frame by frame against CreateJS</li>
+</ul>
+<p>Coming from <a href="https://github.com/tawaship/pixi-animate-container">@tawaship/pixi-animate-container</a>? It plays the
+same content and is used the same way; see <a href="#coming-from-pixi-animate-container">Coming from pixi-animate-container</a>.</p>
+<p><strong>Status: under development.</strong> What does not work yet is listed under <a href="#current-limits">Current limits</a>.</p>
 <p>API reference: <a href="https://tawaship.github.io/pixi-animate-runtime/docs/">https://tawaship.github.io/pixi-animate-runtime/docs/</a></p>
 <p>Samples (content published from Animate, played by this package or by CreateJS): <a href="https://tawaship.github.io/pixi-animate-runtime/samples/">https://tawaship.github.io/pixi-animate-runtime/samples/</a></p>
-<p><strong>Convert only content you trust.</strong> Generating runs the published JavaScript, frame scripts included, in
-Node.js, in a <code>vm</code> context that is not a security boundary: code in the file can reach what Node.js can (files,
-commands, the network) with your permissions. Treat a published file as you would treat a script you run:
-convert content published by you or by people you trust. In the browser, the runtime content is as safe as the
-published content would be.</p>
+<p><strong>Convert only content you trust.</strong> Converting runs the published JavaScript, frame scripts included, to read
+it. It runs in a sandbox (QuickJS, a separate JavaScript engine compiled to WebAssembly) that is given nothing
+of your machine: no files, no commands, no network. Running code is never without risk all the same: a flaw in
+the sandbox or the engines could let code in the file reach further. Convert content published by you or by
+people you trust, and treat content you receive (from a contractor, an asset store and so on) as code you would
+run. In the browser, the runtime content is as safe as the published content would be.</p>
+<h2 id="quick-start" class="tsd-anchor-link">Quick start<a href="#quick-start" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The published files are needed only to convert. Your application ships the runtime content (and the images it
+uses), not the published files. This example keeps them apart:</p>
+<pre><code><span class="hl-0">my</span><span class="hl-1">-</span><span class="hl-0">project</span><span class="hl-1">/</span><br/><span class="hl-1">├─ </span><span class="hl-0">animate</span><span class="hl-1">/          </span><span class="hl-0">what</span><span class="hl-1"> </span><span class="hl-0">Animate</span><span class="hl-1"> </span><span class="hl-2">publishes</span><span class="hl-1"> (</span><span class="hl-0">read</span><span class="hl-1"> </span><span class="hl-0">when</span><span class="hl-1"> </span><span class="hl-0">converting</span><span class="hl-1">; </span><span class="hl-0">not</span><span class="hl-1"> </span><span class="hl-0">shipped</span><span class="hl-1">)</span><br/><span class="hl-1">└─ </span><span class="hl-0">public</span><span class="hl-1">/           </span><span class="hl-0">what</span><span class="hl-1"> </span><span class="hl-0">the</span><span class="hl-1"> </span><span class="hl-0">application</span><span class="hl-1"> </span><span class="hl-0">ships</span><br/><span class="hl-1">   ├─ </span><span class="hl-0">animates</span><span class="hl-1">/      </span><span class="hl-0">the</span><span class="hl-1"> </span><span class="hl-0">runtime</span><span class="hl-1"> </span><span class="hl-0">content</span><span class="hl-1">, </span><span class="hl-0">written</span><span class="hl-1"> </span><span class="hl-0">by</span><span class="hl-1"> </span><span class="hl-0">the</span><span class="hl-1"> </span><span class="hl-0">command</span><br/><span class="hl-1">   ├─ </span><span class="hl-0">lib</span><span class="hl-1">/           </span><span class="hl-0">PixiJS</span><span class="hl-1"> </span><span class="hl-0">and</span><span class="hl-1"> </span><span class="hl-0">the</span><span class="hl-1"> </span><span class="hl-0">player</span><br/><span class="hl-1">   └─ </span><span class="hl-0">index</span><span class="hl-1">.</span><span class="hl-0">html</span>
+</code><button>Copy</button></pre>
+
+<ol>
+<li>
+<p><strong>Publish from Animate.</strong> In Adobe Animate, publish the document for HTML5 Canvas into <code>animate/</code> (you get
+<code>game.js</code>, <code>game.html</code> and an <code>images/</code> directory).</p>
+</li>
+<li>
+<p><strong>Install.</strong> In the project (Node.js 18 or later):</p>
+<pre><code><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">install</span><span class="hl-1"> </span><span class="hl-0">pixi</span><span class="hl-1">.</span><span class="hl-0">js</span><span class="hl-1">@</span><span class="hl-3">5</span><span class="hl-1"> @</span><span class="hl-0">tawaship</span><span class="hl-1">/</span><span class="hl-0">pixi</span><span class="hl-1">-</span><span class="hl-0">animate</span><span class="hl-1">-</span><span class="hl-0">runtime</span>
+</code><button>Copy</button></pre>
+
+<p>Copy <code>node_modules/pixi.js/dist/pixi.min.js</code> and
+<code>node_modules/@tawaship/pixi-animate-runtime/dist/pixi-animate-runtime.js</code> into <code>public/lib/</code> (or import the
+player with a bundler).</p>
+</li>
+<li>
+<p><strong>Convert.</strong> From the project's root:</p>
+<pre><code><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-0">pixi</span><span class="hl-1">-</span><span class="hl-0">animate</span><span class="hl-1">-</span><span class="hl-0">runtime</span><span class="hl-1"> </span><span class="hl-0">animate</span><span class="hl-1"> --</span><span class="hl-0">out</span><span class="hl-1">-</span><span class="hl-0">dir</span><span class="hl-1"> </span><span class="hl-0">public</span><span class="hl-1">/</span><span class="hl-0">animates</span>
+</code><button>Copy</button></pre>
+
+<p>This writes <code>public/animates/game.js</code> (the runtime content) and copies the images it uses into
+<code>public/animates/images/</code>. It prints the content's <strong>composition id</strong>, which the next step needs.</p>
+</li>
+<li>
+<p><strong>Play.</strong> In <code>public/index.html</code>, load PixiJS, the player and the runtime content, and put the symbol the
+published HTML showed (named after the published file, here <code>game</code>) on an <code>AnimateContainer</code>:</p>
+<pre><code class="html"><span class="hl-4">&lt;</span><span class="hl-5">script</span><span class="hl-6"> </span><span class="hl-7">src</span><span class="hl-6">=</span><span class="hl-8">&quot;lib/pixi.min.js&quot;</span><span class="hl-4">&gt;&lt;/</span><span class="hl-5">script</span><span class="hl-4">&gt;</span><br/><span class="hl-4">&lt;</span><span class="hl-5">script</span><span class="hl-6"> </span><span class="hl-7">src</span><span class="hl-6">=</span><span class="hl-8">&quot;lib/pixi-animate-runtime.js&quot;</span><span class="hl-4">&gt;&lt;/</span><span class="hl-5">script</span><span class="hl-4">&gt;</span><br/><span class="hl-4">&lt;</span><span class="hl-5">script</span><span class="hl-6"> </span><span class="hl-7">src</span><span class="hl-6">=</span><span class="hl-8">&quot;animates/game.js&quot;</span><span class="hl-4">&gt;&lt;/</span><span class="hl-5">script</span><span class="hl-4">&gt;</span><br/><span class="hl-4">&lt;</span><span class="hl-5">script</span><span class="hl-4">&gt;</span><br/><span class="hl-9">const</span><span class="hl-6"> </span><span class="hl-10">app</span><span class="hl-6"> </span><span class="hl-1">=</span><span class="hl-6"> </span><span class="hl-9">new</span><span class="hl-6"> </span><span class="hl-10">PIXI</span><span class="hl-6">.</span><span class="hl-2">Application</span><span class="hl-6">({ </span><span class="hl-0">width:</span><span class="hl-6"> </span><span class="hl-3">550</span><span class="hl-6">, </span><span class="hl-0">height:</span><span class="hl-6"> </span><span class="hl-3">400</span><span class="hl-6"> });</span><br/><span class="hl-0">document</span><span class="hl-6">.</span><span class="hl-0">body</span><span class="hl-6">.</span><span class="hl-2">appendChild</span><span class="hl-6">(</span><span class="hl-0">app</span><span class="hl-6">.</span><span class="hl-0">view</span><span class="hl-6">);</span><br/><br/><span class="hl-9">const</span><span class="hl-6"> { </span><span class="hl-10">loadContentAsync</span><span class="hl-6">, </span><span class="hl-10">AnimateContainer</span><span class="hl-6"> } </span><span class="hl-1">=</span><span class="hl-6"> </span><span class="hl-10">PIXI</span><span class="hl-6">.</span><span class="hl-0">animateRuntime</span><span class="hl-6">;</span><br/><span class="hl-2">loadContentAsync</span><span class="hl-6">({ </span><span class="hl-0">id:</span><span class="hl-6"> </span><span class="hl-11">&#39;&lt;composition id&gt;&#39;</span><span class="hl-6">, </span><span class="hl-0">basepath:</span><span class="hl-6"> </span><span class="hl-11">&#39;animates/&#39;</span><span class="hl-6"> }).</span><span class="hl-2">then</span><span class="hl-6">(</span><span class="hl-0">content</span><span class="hl-6"> </span><span class="hl-9">=&gt;</span><span class="hl-6"> {</span><br/><span class="hl-6">	</span><span class="hl-9">const</span><span class="hl-6"> </span><span class="hl-10">container</span><span class="hl-6"> </span><span class="hl-1">=</span><span class="hl-6"> </span><span class="hl-9">new</span><span class="hl-6"> </span><span class="hl-2">AnimateContainer</span><span class="hl-6">();</span><br/><span class="hl-6">	</span><span class="hl-0">app</span><span class="hl-6">.</span><span class="hl-0">stage</span><span class="hl-6">.</span><span class="hl-2">addChild</span><span class="hl-6">(</span><span class="hl-0">container</span><span class="hl-6">);</span><br/><span class="hl-6">	</span><span class="hl-0">app</span><span class="hl-6">.</span><span class="hl-0">ticker</span><span class="hl-6">.</span><span class="hl-2">add</span><span class="hl-6">(</span><span class="hl-0">container</span><span class="hl-6">.</span><span class="hl-0">handleTick</span><span class="hl-6">, </span><span class="hl-0">container</span><span class="hl-6">);</span><br/><span class="hl-6">	</span><span class="hl-0">container</span><span class="hl-6">.</span><span class="hl-2">addCreatejs</span><span class="hl-6">(</span><span class="hl-0">content</span><span class="hl-6">.</span><span class="hl-2">create</span><span class="hl-6">(</span><span class="hl-11">&#39;game&#39;</span><span class="hl-6">));</span><br/><span class="hl-6">});</span><br/><span class="hl-4">&lt;/</span><span class="hl-5">script</span><span class="hl-4">&gt;</span>
+</code><button type="button">Copy</button></pre>
+
+<p>The content plays at the frame rate it was published with.</p>
+</li>
+<li>
+<p><strong>After publishing again from Animate, run step 3 again.</strong> The player plays the runtime content, never the
+published files: a change made in Animate shows only once the runtime content is made again.</p>
+</li>
+</ol>
+<p>The sections below explain each step: <a href="#converting-published-content">Converting published content</a> (options,
+the Windows batch file, the Node API) and <a href="#playing-content">Playing content</a> (loading options, the container,
+the objects).</p>
 <h2 id="what-you-need" class="tsd-anchor-link">What you need<a href="#what-you-need" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <ul>
 <li>PixiJS 5.3 (<code>pixi.js</code> ^5.3.2) in your application</li>
@@ -74,18 +122,22 @@ that no content uses are not copied, and scripts that are not Animate output are
 to remove when they are no longer needed. Run in a terminal without a directory, the tool asks for it, lists
 the published files it found with their composition ids, and asks where to write (empty: <code>generated/</code>); a
 directory you name that is not empty is written to only after you answer <code>y</code>.</p>
-<p>A content is not written when it uses unsupported features (each one is listed) or when an image it uses is
-missing; the other contents still are, and the command then exits with <code>1</code>. It exits with <code>2</code> when the
-directory or file cannot be read.</p>
+<p>A content is not written when it uses unsupported features (each one is listed), when an image it uses is
+missing, or when the path of an image leads out of the published directory (Animate writes them below it);
+the other contents still are, and the command then exits with <code>1</code>. It exits with <code>2</code> when the directory or
+file cannot be read.</p>
 <p>On Windows, <code>tools/pixi-animate-runtime.bat</code> (in the installed package) does the same: copy it into your
 project, then drop the published directory on it, or double-click it to be asked.</p>
 <p>The same is available from Node:</p>
-<pre><code class="js"><span class="hl-2">const</span><span class="hl-1"> { </span><span class="hl-3">generateFromPublishedFile</span><span class="hl-1"> } = </span><span class="hl-4">require</span><span class="hl-1">(</span><span class="hl-5">&#39;@tawaship/pixi-animate-runtime/generator&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">generated</span><span class="hl-1"> = </span><span class="hl-4">generateFromPublishedFile</span><span class="hl-1">(</span><span class="hl-5">&#39;assets/animates/game.js&#39;</span><span class="hl-1">);</span><br/><span class="hl-4">require</span><span class="hl-1">(</span><span class="hl-5">&#39;fs&#39;</span><span class="hl-1">).</span><span class="hl-4">writeFileSync</span><span class="hl-1">(</span><span class="hl-5">&#39;game.js&#39;</span><span class="hl-1">, </span><span class="hl-0">generated</span><span class="hl-1">.</span><span class="hl-0">source</span><span class="hl-1">);</span>
+<pre><code class="js"><span class="hl-9">const</span><span class="hl-1"> { </span><span class="hl-10">generateFromPublishedFile</span><span class="hl-1"> } = </span><span class="hl-2">require</span><span class="hl-1">(</span><span class="hl-11">&#39;@tawaship/pixi-animate-runtime/generator&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-2">generateFromPublishedFile</span><span class="hl-1">(</span><span class="hl-11">&#39;assets/animates/game.js&#39;</span><span class="hl-1">).</span><span class="hl-2">then</span><span class="hl-1">(</span><span class="hl-0">generated</span><span class="hl-1"> </span><span class="hl-9">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">	</span><span class="hl-2">require</span><span class="hl-1">(</span><span class="hl-11">&#39;fs&#39;</span><span class="hl-1">).</span><span class="hl-2">writeFileSync</span><span class="hl-1">(</span><span class="hl-11">&#39;game.js&#39;</span><span class="hl-1">, </span><span class="hl-0">generated</span><span class="hl-1">.</span><span class="hl-0">source</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
 </code><button type="button">Copy</button></pre>
 
 <p><code>generated.id</code> is the content's composition id, <code>generated.data</code> its data, <code>generated.issues</code> lists
 unsupported features and <code>generated.warnings</code> what to look at (see <a href="#versions">Versions</a>). Images are not
 copied by this function.</p>
+<p><code>generate(definition)</code> makes the runtime content from a definition you already have, in the form
+<code>@tawaship/animate-data-converter</code> extracts it (its compact form). An expanded definition (written with
+<code>--expanded</code>, or made with <code>expand()</code>) is refused: turn it back with the converter's <code>compact()</code> first.</p>
 <p>Frame scripts are copied into the runtime content as they were published, as code. Nothing is rewritten
 (a <code>console.log</code> left in a script stays), and the runtime content needs no <code>eval</code> at run time.</p>
 <h3 id="composition-ids" class="tsd-anchor-link">Composition ids<a href="#composition-ids" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
@@ -104,10 +156,10 @@ is shown where the earlier was meant</li>
 <h2 id="playing-content" class="tsd-anchor-link">Playing content<a href="#playing-content" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <p>Load the runtime content file, load the content by its composition id, and put an instance of a symbol on an
 <code>AnimateContainer</code>:</p>
-<pre><code class="html"><span class="hl-6">&lt;</span><span class="hl-7">script</span><span class="hl-8"> </span><span class="hl-9">src</span><span class="hl-8">=</span><span class="hl-10">&quot;pixi.js&quot;</span><span class="hl-6">&gt;&lt;/</span><span class="hl-7">script</span><span class="hl-6">&gt;</span><br/><span class="hl-6">&lt;</span><span class="hl-7">script</span><span class="hl-8"> </span><span class="hl-9">src</span><span class="hl-8">=</span><span class="hl-10">&quot;pixi-animate-runtime.js&quot;</span><span class="hl-6">&gt;&lt;/</span><span class="hl-7">script</span><span class="hl-6">&gt;</span><br/><span class="hl-6">&lt;</span><span class="hl-7">script</span><span class="hl-8"> </span><span class="hl-9">src</span><span class="hl-8">=</span><span class="hl-10">&quot;assets/animates/game.js&quot;</span><span class="hl-6">&gt;&lt;/</span><span class="hl-7">script</span><span class="hl-6">&gt;</span><span class="hl-1">   </span><span class="hl-11">&lt;!-- a runtime content file --&gt;</span>
+<pre><code class="html"><span class="hl-4">&lt;</span><span class="hl-5">script</span><span class="hl-6"> </span><span class="hl-7">src</span><span class="hl-6">=</span><span class="hl-8">&quot;pixi.js&quot;</span><span class="hl-4">&gt;&lt;/</span><span class="hl-5">script</span><span class="hl-4">&gt;</span><br/><span class="hl-4">&lt;</span><span class="hl-5">script</span><span class="hl-6"> </span><span class="hl-7">src</span><span class="hl-6">=</span><span class="hl-8">&quot;pixi-animate-runtime.js&quot;</span><span class="hl-4">&gt;&lt;/</span><span class="hl-5">script</span><span class="hl-4">&gt;</span><br/><span class="hl-4">&lt;</span><span class="hl-5">script</span><span class="hl-6"> </span><span class="hl-7">src</span><span class="hl-6">=</span><span class="hl-8">&quot;assets/animates/game.js&quot;</span><span class="hl-4">&gt;&lt;/</span><span class="hl-5">script</span><span class="hl-4">&gt;</span><span class="hl-1">   </span><span class="hl-12">&lt;!-- a runtime content file --&gt;</span>
 </code><button type="button">Copy</button></pre>
 
-<pre><code class="js"><span class="hl-2">const</span><span class="hl-1"> { </span><span class="hl-3">loadContentAsync</span><span class="hl-1">, </span><span class="hl-3">AnimateContainer</span><span class="hl-1"> } = </span><span class="hl-3">PIXI</span><span class="hl-1">.</span><span class="hl-0">animateRuntime</span><span class="hl-1">;</span><br/><br/><span class="hl-4">loadContentAsync</span><span class="hl-1">({ </span><span class="hl-0">id:</span><span class="hl-1"> </span><span class="hl-5">&#39;2FA8E0C7230941478CE2CA3DB82DBEDF&#39;</span><span class="hl-1">, </span><span class="hl-0">basepath:</span><span class="hl-1"> </span><span class="hl-5">&#39;assets/animates/&#39;</span><span class="hl-1"> })</span><br/><span class="hl-1">	.</span><span class="hl-4">then</span><span class="hl-1">(</span><span class="hl-0">content</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">		</span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">container</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-4">AnimateContainer</span><span class="hl-1">();</span><br/><span class="hl-1">		</span><span class="hl-0">app</span><span class="hl-1">.</span><span class="hl-0">stage</span><span class="hl-1">.</span><span class="hl-4">addChild</span><span class="hl-1">(</span><span class="hl-0">container</span><span class="hl-1">);</span><br/><span class="hl-1">		</span><span class="hl-0">app</span><span class="hl-1">.</span><span class="hl-0">ticker</span><span class="hl-1">.</span><span class="hl-4">add</span><span class="hl-1">(</span><span class="hl-0">container</span><span class="hl-1">.</span><span class="hl-0">handleTick</span><span class="hl-1">, </span><span class="hl-0">container</span><span class="hl-1">);</span><br/><br/><span class="hl-1">		</span><span class="hl-0">container</span><span class="hl-1">.</span><span class="hl-4">addCreatejs</span><span class="hl-1">(</span><span class="hl-0">content</span><span class="hl-1">.</span><span class="hl-4">create</span><span class="hl-1">(</span><span class="hl-5">&#39;game&#39;</span><span class="hl-1">));   </span><span class="hl-11">// the symbol the published HTML used as its root</span><br/><span class="hl-1">	});</span>
+<pre><code class="js"><span class="hl-9">const</span><span class="hl-1"> { </span><span class="hl-10">loadContentAsync</span><span class="hl-1">, </span><span class="hl-10">AnimateContainer</span><span class="hl-1"> } = </span><span class="hl-10">PIXI</span><span class="hl-1">.</span><span class="hl-0">animateRuntime</span><span class="hl-1">;</span><br/><br/><span class="hl-2">loadContentAsync</span><span class="hl-1">({ </span><span class="hl-0">id:</span><span class="hl-1"> </span><span class="hl-11">&#39;2FA8E0C7230941478CE2CA3DB82DBEDF&#39;</span><span class="hl-1">, </span><span class="hl-0">basepath:</span><span class="hl-1"> </span><span class="hl-11">&#39;assets/animates/&#39;</span><span class="hl-1"> })</span><br/><span class="hl-1">	.</span><span class="hl-2">then</span><span class="hl-1">(</span><span class="hl-0">content</span><span class="hl-1"> </span><span class="hl-9">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">		</span><span class="hl-9">const</span><span class="hl-1"> </span><span class="hl-10">container</span><span class="hl-1"> = </span><span class="hl-9">new</span><span class="hl-1"> </span><span class="hl-2">AnimateContainer</span><span class="hl-1">();</span><br/><span class="hl-1">		</span><span class="hl-0">app</span><span class="hl-1">.</span><span class="hl-0">stage</span><span class="hl-1">.</span><span class="hl-2">addChild</span><span class="hl-1">(</span><span class="hl-0">container</span><span class="hl-1">);</span><br/><span class="hl-1">		</span><span class="hl-0">app</span><span class="hl-1">.</span><span class="hl-0">ticker</span><span class="hl-1">.</span><span class="hl-2">add</span><span class="hl-1">(</span><span class="hl-0">container</span><span class="hl-1">.</span><span class="hl-0">handleTick</span><span class="hl-1">, </span><span class="hl-0">container</span><span class="hl-1">);</span><br/><br/><span class="hl-1">		</span><span class="hl-0">container</span><span class="hl-1">.</span><span class="hl-2">addCreatejs</span><span class="hl-1">(</span><span class="hl-0">content</span><span class="hl-1">.</span><span class="hl-2">create</span><span class="hl-1">(</span><span class="hl-11">&#39;game&#39;</span><span class="hl-1">));   </span><span class="hl-12">// the symbol the published HTML used as its root</span><br/><span class="hl-1">	});</span>
 </code><button type="button">Copy</button></pre>
 
 <p>This loads the content's images from <code>basepath</code> and shows the <code>game</code> symbol, playing it at the frame rate it
@@ -289,6 +341,16 @@ not checked yet</li>
 <li>Content that uses the Animate camera (&quot;Advanced Layers&quot;) is not supported: delete the camera layer and
 publish again</li>
 </ul>
+<h2 id="how-it-works" class="tsd-anchor-link">How it works<a href="#how-it-works" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Published content defines each symbol as a class whose constructor builds its children and its whole timeline,
+for every instance. The command runs the published code once, at development time (in its sandbox, with
+<code>@tawaship/animate-data-converter</code>), and records each symbol as data: the display objects it owns and the
+value of every property its timeline sets, at every frame. The runtime content holds that data, written
+compactly, and the frame scripts as code.</p>
+<p>The player builds every instance of a symbol from the same data, so creating many instances at once does not
+build a timeline for each, and it needs neither CreateJS nor the published code. It plays the frames as CreateJS
+does: tests play every test content on both, frame by frame (see
+<a href="#how-correctness-is-checked">How correctness is checked</a>).</p>
 <h2 id="versions" class="tsd-anchor-link">Versions<a href="#versions" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <p>Runtime content records the version of this package that generated it, and the player checks it when the
 content is loaded (<code>loadContentAsync</code>):</p>
@@ -355,6 +417,7 @@ line tool and the API), and plays it on PixiJS 5.3 without CreateJS (<code>loadC
 <h3>On This Page</h3></summary>
 <div class="tsd-accordion-details"><a href="#tawashippixi-animate-runtime"><span>@tawaship/pixi-<wbr/>animate-<wbr/>runtime</span></a>
 <ul>
+<li><a href="#quick-start"><span>Quick start</span></a></li>
 <li><a href="#what-you-need"><span>What you need</span></a></li>
 <li><a href="#supported-versions"><span>Supported versions</span></a></li>
 <li><a href="#converting-published-content"><span>Converting published content</span></a></li>
@@ -367,6 +430,7 @@ line tool and the API), and plays it on PixiJS 5.3 without CreateJS (<code>loadC
 <li><a href="#objects-and-their-pixi-nodes"><span>Objects and their <wbr/>Pixi nodes</span></a></li></ul></li>
 <li><a href="#coming-from-pixi-animate-container"><span>Coming from pixi-<wbr/>animate-<wbr/>container</span></a></li>
 <li><a href="#current-limits"><span>Current limits</span></a></li>
+<li><a href="#how-it-works"><span>How it works</span></a></li>
 <li><a href="#versions"><span>Versions</span></a></li>
 <li><a href="#how-correctness-is-checked"><span>How correctness is checked</span></a></li>
 <li><a href="#change-log"><span>Change log</span></a></li>

@@ -13,7 +13,7 @@
 <h1>Interface IGenerated</h1></div>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">IGenerated</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#data">data</a><span class="tsd-signature-symbol">:</span> <a href="player.IRuntimeData.html" class="tsd-signature-type tsd-kind-interface">IRuntimeData</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#id">id</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#issues">issues</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IIssue</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#memberwriters">memberWriters</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#scripts">scripts</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#source">source</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#warnings">warnings</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#writers">writers</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/index.ts:14</li></ul></aside>
+<li>Defined in packages/pixi-animate-runtime/src/generator/generate.ts:14</li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -39,56 +39,56 @@
 <div class="tsd-comment tsd-typography"><p>The content's data (what the runtime content returns as <code>data</code>)</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/index.ts:18</li></ul></aside></section>
+<li>Defined in packages/pixi-animate-runtime/src/generator/generate.ts:18</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="id"><span>id</span><a href="#id" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p>The composition id the runtime content is registered under</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/index.ts:16</li></ul></aside></section>
+<li>Defined in packages/pixi-animate-runtime/src/generator/generate.ts:16</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="issues"><span>issues</span><a href="#issues" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">issues</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IIssue</span><span class="tsd-signature-symbol">[]</span></div>
 <div class="tsd-comment tsd-typography"><p>Unsupported features the converter found</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/index.ts:28</li></ul></aside></section>
+<li>Defined in packages/pixi-animate-runtime/src/generator/generate.ts:28</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="memberwriters"><span>member<wbr/>Writers</span><a href="#memberwriters" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">memberWriters</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 <div class="tsd-comment tsd-typography"><p>Member writer function sources, by the index the data refers to them with</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/index.ts:24</li></ul></aside></section>
+<li>Defined in packages/pixi-animate-runtime/src/generator/generate.ts:24</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="scripts"><span>scripts</span><a href="#scripts" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">scripts</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 <div class="tsd-comment tsd-typography"><p>Frame script sources, by the index the data refers to them with</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/index.ts:20</li></ul></aside></section>
+<li>Defined in packages/pixi-animate-runtime/src/generator/generate.ts:20</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="source"><span>source</span><a href="#source" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">source</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p>The runtime content (JavaScript source)</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/index.ts:26</li></ul></aside></section>
+<li>Defined in packages/pixi-animate-runtime/src/generator/generate.ts:26</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="warnings"><span>warnings</span><a href="#warnings" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">warnings</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 <div class="tsd-comment tsd-typography"><p>Things to look at that did not stop the generation (a definition from a newer converter)</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/index.ts:30</li></ul></aside></section>
+<li>Defined in packages/pixi-animate-runtime/src/generator/generate.ts:30</li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="writers"><span>writers</span><a href="#writers" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">writers</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 <div class="tsd-comment tsd-typography"><p>Writer function sources, by the index the data refers to them with</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/index.ts:22</li></ul></aside></section></section></details></div>
+<li>Defined in packages/pixi-animate-runtime/src/generator/generate.ts:22</li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

@@ -334,224 +334,6 @@ const SLOT_DEFAULTS = {
     initWriter: null, initValues: null
 };
 
-const USAGE = [
-    'Usage: pixi-animate-runtime [<published directory or file>] [--out-dir <directory>] [--force]',
-    '',
-    '  <published directory>  a directory Animate published HTML5 Canvas content into: every published',
-    '                         JavaScript file directly in it is turned into runtime content',
-    '  <published file>       one published JavaScript file',
-    '  --out-dir <directory>  where to write (default: generated/ in the published directory)',
-    '  --force                write runtime content even when the content uses unsupported features',
-    '',
-    'Each runtime content file gets the name of its published file, and the images it uses are copied',
-    'next to it at the same relative paths. Nothing is ever deleted: files already in the output',
-    'directory that this run did not write are listed. Asked for the directories when run in a',
-    'terminal without them.'
-].join('\n');
-/** Whether a JavaScript file is Animate HTML5 Canvas output (it registers a composition) */
-function isPublished(file) {
-    return /\.compositions\s*\[/.test(fs__namespace.readFileSync(file, 'utf8'));
-}
-function publishedFiles(dir) {
-    return fs__namespace.readdirSync(dir, { withFileTypes: true })
-        .filter(entry => entry.isFile() && /\.js$/i.test(entry.name))
-        .map(entry => path__namespace.join(dir, entry.name))
-        .filter(isPublished)
-        .sort();
-}
-/** The local file of an image path of the manifest (its query and hash left out), or null for a URL that is not a file */
-function localImagePath(src) {
-    if (/^(data:|blob:|[a-z][a-z0-9+.-]*:\/\/)/i.test(src) || src.charAt(0) === '/') {
-        return null;
-    }
-    return src.split('#')[0].split('?')[0];
-}
-function listFiles(dir) {
-    if (!fs__namespace.existsSync(dir)) {
-        return [];
-    }
-    const files = [];
-    fs__namespace.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
-        const full = path__namespace.join(dir, entry.name);
-        if (entry.isDirectory()) {
-            listFiles(full).forEach(file => files.push(file));
-        }
-        else {
-            files.push(full);
-        }
-    });
-    return files;
-}
-function relative(from, file) {
-    return path__namespace.relative(from, file).split(path__namespace.sep).join('/') || '.';
-}
-/**
- * The command line tool. Returns the exit code: 0 when every content was
- * written, 1 when some could not be (unsupported features without --force,
- * images the content uses that are missing) or the user declined, 2 for
- * usage and loading errors.
- */
-async function runCli(args, io) {
-    const cwd = io.cwd || process.cwd();
-    let input = null;
-    let outDirArg = null;
-    let force = false;
-    for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
-        if (arg === '--out-dir') {
-            const value = args[++i];
-            if (value === undefined) {
-                io.stderr('--out-dir needs a directory\n\n' + USAGE + '\n');
-                return 2;
-            }
-            outDirArg = value;
-        }
-        else if (arg === '--force') {
-            force = true;
-        }
-        else if (arg === '--help' || arg === '-h') {
-            io.stdout(USAGE + '\n');
-            return 0;
-        }
-        else if (arg.indexOf('--') === 0 || input !== null) {
-            io.stderr('unexpected argument: ' + arg + '\n\n' + USAGE + '\n');
-            return 2;
-        }
-        else {
-            input = arg;
-        }
-    }
-    if (input === null) {
-        input = io.ask ? (await io.ask('Directory of the published content (empty: the current directory): ')).trim() : '';
-    }
-    const inputPath = path__namespace.resolve(cwd, input || '.');
-    if (!fs__namespace.existsSync(inputPath)) {
-        io.stderr('not found: ' + inputPath + '\n');
-        return 2;
-    }
-    const single = fs__namespace.statSync(inputPath).isFile();
-    const publishedDir = single ? path__namespace.dirname(inputPath) : inputPath;
-    const files = single ? [inputPath] : publishedFiles(inputPath);
-    if (!files.length) {
-        io.stderr('no published content (Animate HTML5 Canvas JavaScript) in ' + inputPath + '\n');
-        return 2;
-    }
-    const sources = [];
-    let failed = false;
-    files.forEach(file => {
-        try {
-            const definition = animateDataConverter.extractPublishedFile(file);
-            sources.push({ file, definition, id: compositionId(definition) });
-        }
-        catch (e) {
-            io.stderr('could not read ' + relative(cwd, file) + ': ' + (e instanceof Error ? e.message : String(e)) + '\n');
-            failed = true;
-        }
-    });
-    if (!sources.length) {
-        return 2;
-    }
-    io.stdout('Published content in ' + relative(cwd, publishedDir) + ':\n');
-    sources.forEach(source => {
-        io.stdout('  ' + path__namespace.basename(source.file) + '  (composition id ' + source.id + ')\n');
-    });
-    const byId = {};
-    sources.forEach(source => {
-        (byId[source.id] = byId[source.id] || []).push(path__namespace.basename(source.file));
-    });
-    Object.keys(byId).filter(id => byId[id].length > 1).forEach(id => {
-        io.stdout('note: ' + byId[id].join(', ') + ' share composition id ' + id + ' (loaded on one page, the later replaces the earlier)\n');
-    });
-    const defaultOut = path__namespace.join(publishedDir, 'generated');
-    let outDir = outDirArg !== null ? path__namespace.resolve(cwd, outDirArg) : defaultOut;
-    let chosen = false;
-    if (outDirArg === null && io.ask) {
-        const answer = (await io.ask('Output directory (empty: ' + relative(cwd, defaultOut) + '): ')).trim();
-        if (answer) {
-            outDir = path__namespace.resolve(cwd, answer);
-            chosen = true;
-        }
-    }
-    if (path__namespace.resolve(outDir) === path__namespace.resolve(publishedDir)) {
-        io.stderr('the output directory is the published directory: runtime content would overwrite the published files of the same names\n');
-        return 2;
-    }
-    if (chosen && io.ask && listFiles(outDir).length) {
-        const answer = (await io.ask(relative(cwd, outDir) + ' is not empty. Overwrite the files written there? (y/N): ')).trim().toLowerCase();
-        if (answer !== 'y' && answer !== 'yes') {
-            io.stdout('Nothing written.\n');
-            return 1;
-        }
-    }
-    const before = listFiles(outDir);
-    const written = {};
-    sources.forEach(source => {
-        const name = path__namespace.basename(source.file);
-        let generated;
-        try {
-            generated = generate(source.definition, name);
-        }
-        catch (e) {
-            io.stderr(name + ': ' + (e instanceof Error ? e.message : String(e)) + '\n');
-            failed = true;
-            return;
-        }
-        generated.warnings.forEach(warning => {
-            io.stderr(name + ': warning: ' + warning + '\n');
-        });
-        if (generated.issues.length) {
-            generated.issues.forEach(issue => {
-                io.stderr(name + ': unsupported: ' + (issue.symbol ? issue.symbol : '(content)') + (issue.slot !== null ? ' slot ' + issue.slot : '') + ': ' + issue.message + '\n');
-            });
-            if (!force) {
-                io.stderr(name + ': not written (' + generated.issues.length + ' unsupported feature(s); --force writes it anyway)\n');
-                failed = true;
-                return;
-            }
-        }
-        const images = [];
-        const missing = [];
-        generated.data.images.forEach(entry => {
-            const local = localImagePath(entry.src);
-            if (local === null) {
-                return;
-            }
-            if (fs__namespace.existsSync(path__namespace.join(publishedDir, local))) {
-                images.push(local);
-            }
-            else {
-                missing.push(entry.src);
-            }
-        });
-        if (missing.length) {
-            io.stderr(name + ': not written: images it uses are missing: ' + missing.join(', ') + '\n');
-            failed = true;
-            return;
-        }
-        fs__namespace.mkdirSync(outDir, { recursive: true });
-        const target = path__namespace.join(outDir, name);
-        fs__namespace.writeFileSync(target, generated.source);
-        written[path__namespace.resolve(target)] = true;
-        images.forEach(image => {
-            const to = path__namespace.join(outDir, image);
-            if (!written[path__namespace.resolve(to)]) {
-                fs__namespace.mkdirSync(path__namespace.dirname(to), { recursive: true });
-                fs__namespace.copyFileSync(path__namespace.join(publishedDir, image), to);
-                written[path__namespace.resolve(to)] = true;
-            }
-        });
-        io.stdout(name + ' -> ' + relative(cwd, target) + '  (composition id ' + generated.id + (images.length ? ', ' + images.length + ' image(s)' : '') + ')\n');
-    });
-    const left = before.filter(file => !written[path__namespace.resolve(file)]);
-    if (left.length) {
-        io.stdout('Not written by this run (remove them if no longer needed):\n');
-        left.forEach(file => {
-            io.stdout('  ' + relative(cwd, file) + '\n');
-        });
-    }
-    return failed ? 1 : 0;
-}
-
 /** Manifest entries kept as images (sounds and other files are left out) */
 const IMAGE_SOURCE = /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i;
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -644,13 +426,13 @@ function tweenWriter(props, frames) {
     return 'function (o, v, g) { ' + lines.join(' ') + ' }';
 }
 /**
- * A slot's template as written in runtime content: the fields at their
- * defaults (SLOT_DEFAULTS) left out, the player filling them in. Its initial
- * values are not in it (the slot gives them).
+ * A slot's template as written in runtime content: the definition's template
+ * with the writer of its initial values, the fields at their defaults
+ * (SLOT_DEFAULTS) left out, the player filling them in. Its initial values are
+ * not in it (the slot gives them).
  */
-function slotTemplate(slot, initWriter) {
-    const { init, ...fields } = slot;
-    const full = Object.assign({}, fields, { initWriter, initValues: null });
+function slotTemplate(template, initWriter) {
+    const full = Object.assign({}, SLOT_DEFAULTS, template, { initWriter, initValues: null });
     const data = { kind: full.kind };
     Object.keys(SLOT_DEFAULTS).forEach(key => {
         const value = Reflect.get(full, key);
@@ -659,29 +441,6 @@ function slotTemplate(slot, initWriter) {
         }
     });
     return data;
-}
-/**
- * The drawings as written in runtime content: each command as the index of its
- * kind (its type and the names of its props, written once in commandKinds) and
- * its props' values, so that no name is written for every command.
- */
-function writtenGraphics(list) {
-    const commandKinds = [];
-    const indexes = new Map();
-    const graphics = list.map(def => ({
-        commands: def.commands.map(command => {
-            const names = Object.keys(command.props);
-            const key = JSON.stringify([command.type, names]);
-            let index = indexes.get(key);
-            if (index === undefined) {
-                index = commandKinds.push([command.type, names]) - 1;
-                indexes.set(key, index);
-            }
-            const written = [index];
-            return written.concat(names.map(name => command.props[name]));
-        })
-    }));
-    return { graphics, commandKinds };
 }
 /** A table of values written once each, identical ones (compared as JSON) sharing one index */
 class JsonTable {
@@ -734,11 +493,7 @@ function initWrite(init) {
 function memberWriter(members) {
     return 'function (o, s) { ' + members.map(member => access(member.name) + ' = s[' + member.slot + '];').join(' ') + ' }';
 }
-/**
- * The content's drawing table: drawings with the same commands are one entry.
- * They are compared by their whole command list (no hash, so two different
- * drawings are never taken for one).
- */
+/** Function sources written once each, identical ones sharing one index */
 class CodeTable {
     constructor() {
         this.list = [];
@@ -755,44 +510,54 @@ class CodeTable {
         return this.list.length - 1;
     }
 }
-class GraphicsTable {
-    constructor() {
-        this.list = [];
-        this._indexes = new Map();
-    }
-    add(graphics) {
-        const key = JSON.stringify(graphics.commands);
-        const known = this._indexes.get(key);
-        if (known !== undefined) {
-            return known;
-        }
-        this.list.push(graphics);
-        this._indexes.set(key, this.list.length - 1);
-        return this.list.length - 1;
-    }
+/** A display list entry from its compact form (a slot placed as it is is the slot's index) */
+function stateEntryOf(entry) {
+    return typeof entry === 'number' ? { target: { type: 'slot', slot: entry }, props: null } : entry;
 }
-function convertMovieClip(def, scripts, writers, memberWriters, graphicsTable, slotTemplates) {
+/** Whether a compact value is a frame value as it is (all but a display list with slot indexes) */
+function isFrameValue(value) {
+    return !Array.isArray(value) || value.every(entry => typeof entry !== 'number');
+}
+/**
+ * A tween's values at every position (frames[position][i] is the value of
+ * props[i]), from its compact form: interpolated stretches are found among
+ * these. Display list entries are whole.
+ */
+function framesOf(tween) {
+    const state = tween.props.indexOf('state');
+    const values = tween.values.map(row => row.map((value, i) => {
+        if (i === state && Array.isArray(value)) {
+            return value.map(stateEntryOf);
+        }
+        return isFrameValue(value) ? value : null;
+    }));
+    return tween.frames.map(index => values[index]);
+}
+function convertMovieClip(def, templates, scripts, writers, memberWriters, slotTemplates) {
     const add = (source) => writers.add(source);
     return {
         kind: def.kind, id: def.id, nominalBounds: def.nominalBounds, frameBounds: def.frameBounds,
         defaults: def.defaults, labels: def.labels, duration: def.duration,
         // A slot is its template (shared by the slots that differ only in their initial values) and its initial values
         slots: def.slots.map((slot) => {
-            const write = initWrite(slot.init);
-            const template = slotTemplates.add(slotTemplate(slot, write ? add(write.source) : null));
+            const write = initWrite(typeof slot === 'number' ? {} : slot[1]);
+            const template = slotTemplates.add(slotTemplate(templates[typeof slot === 'number' ? slot : slot[0]], write ? add(write.source) : null));
             return write ? [template, write.values] : template;
         }),
         memberWriter: def.members.length ? memberWriters.add(memberWriter(def.members)) : null,
-        unmanaged: def.unmanaged, graphics: def.graphics.map(g => graphicsTable.add(g)), filterCacheList: def.filterCacheList,
-        tweens: def.tweens.map(tween => Object.assign({
-            target: tween.target, duration: tween.duration, props: tween.props,
-            keyframes: tween.keyframes,
-            actions: tween.actions.map(action => {
-                scripts.push(action.source);
-                return { position: action.position, script: scripts.length - 1, params: action.params };
-            }),
-            writer: tween.props.length ? add(tweenWriter(tween.props, tween.frames)) : null
-        }, writtenFrames(tween.props, tween.frames, tween.keyframes)))
+        unmanaged: def.unmanaged, graphics: def.graphics, filterCacheList: def.filterCacheList,
+        tweens: def.tweens.map(tween => {
+            const frames = framesOf(tween);
+            return Object.assign({
+                target: tween.target, duration: tween.duration, props: tween.props,
+                keyframes: tween.keyframes,
+                actions: tween.actions.map(action => {
+                    scripts.push(action.source);
+                    return { position: action.position, script: scripts.length - 1, params: action.params };
+                }),
+                writer: tween.props.length ? add(tweenWriter(tween.props, frames)) : null
+            }, writtenFrames(tween.props, frames, tween.keyframes));
+        })
     };
 }
 /**
@@ -868,24 +633,27 @@ function compositionId(definition) {
  */
 function generate(definition, sourceName) {
     const warnings = checkDefinition(definition);
+    if (definition.form !== 'compact') {
+        throw new Error('The definition is not in its compact form (form: ' + JSON.stringify(definition.form) + '): generate takes the definition as animate-data-converter extracts it (compact() of animate-data-converter gives it from an expanded one).');
+    }
     const id = compositionId(definition);
     const scripts = [];
     // Writers written the same (the same values set, the same names given) are written once and shared
     const writers = new CodeTable();
     const memberWriters = new CodeTable();
-    const graphicsTable = new GraphicsTable();
     const slotTemplates = new JsonTable();
     const symbols = {};
     Object.keys(definition.symbols).forEach(key => {
         const def = definition.symbols[key];
-        symbols[key] = def.kind === 'movieclip' ? convertMovieClip(def, scripts, writers, memberWriters, graphicsTable, slotTemplates) : def;
+        symbols[key] = def.kind === 'movieclip' ? convertMovieClip(def, definition.slotTemplates, scripts, writers, memberWriters, slotTemplates) : def;
     });
     const data = {
         runtimeVersion: VERSION,
         properties: definition.properties,
         images: definition.manifest.filter(entry => IMAGE_SOURCE.test(entry.src)),
         spriteSheets: definition.spriteSheets,
-        ...writtenGraphics(graphicsTable.list),
+        graphics: definition.graphics,
+        commandKinds: definition.commandKinds,
         slotTemplates: slotTemplates.list,
         symbols
     };
@@ -896,7 +664,245 @@ function generate(definition, sourceName) {
  * Extracts a published file and generates its runtime content.
  */
 function generateFromPublishedFile(publishedPath) {
-    return generate(animateDataConverter.extractPublishedFile(publishedPath), path__namespace.basename(publishedPath));
+    return animateDataConverter.extractPublishedFile(publishedPath).then(definition => generate(definition, path__namespace.basename(publishedPath)));
+}
+
+const USAGE = [
+    'Usage: pixi-animate-runtime [<published directory or file>] [--out-dir <directory>] [--force]',
+    '',
+    '  <published directory>  a directory Animate published HTML5 Canvas content into: every published',
+    '                         JavaScript file directly in it is turned into runtime content',
+    '  <published file>       one published JavaScript file',
+    '  --out-dir <directory>  where to write (default: generated/ in the published directory)',
+    '  --force                write runtime content even when the content uses unsupported features',
+    '',
+    'Each runtime content file gets the name of its published file, and the images it uses are copied',
+    'next to it at the same relative paths. Nothing is ever deleted: files already in the output',
+    'directory that this run did not write are listed. Asked for the directories when run in a',
+    'terminal without them.'
+].join('\n');
+/** Whether a JavaScript file is Animate HTML5 Canvas output (it registers a composition) */
+function isPublished(file) {
+    return /\.compositions\s*\[/.test(fs__namespace.readFileSync(file, 'utf8'));
+}
+function publishedFiles(dir) {
+    return fs__namespace.readdirSync(dir, { withFileTypes: true })
+        .filter(entry => entry.isFile() && /\.js$/i.test(entry.name))
+        .map(entry => path__namespace.join(dir, entry.name))
+        .filter(isPublished)
+        .sort();
+}
+/** The local file of an image path of the manifest (its query and hash left out), or null for a URL that is not a file */
+function localImagePath(src) {
+    if (/^(data:|blob:|[a-z][a-z0-9+.-]*:\/\/)/i.test(src) || src.charAt(0) === '/') {
+        return null;
+    }
+    return src.split('#')[0].split('?')[0];
+}
+/** Whether a relative path stays inside a directory (not absolute, and not leading up out of it) */
+function isBelow(dir, relativePath) {
+    if (path__namespace.isAbsolute(relativePath)) {
+        return false;
+    }
+    const fromDir = path__namespace.relative(dir, path__namespace.resolve(dir, relativePath));
+    return fromDir !== '' && !fromDir.startsWith('..') && !path__namespace.isAbsolute(fromDir);
+}
+function listFiles(dir) {
+    if (!fs__namespace.existsSync(dir)) {
+        return [];
+    }
+    const files = [];
+    fs__namespace.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
+        const full = path__namespace.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            listFiles(full).forEach(file => files.push(file));
+        }
+        else {
+            files.push(full);
+        }
+    });
+    return files;
+}
+function relative(from, file) {
+    return path__namespace.relative(from, file).split(path__namespace.sep).join('/') || '.';
+}
+/**
+ * The command line tool. Returns the exit code: 0 when every content was
+ * written, 1 when some could not be (unsupported features without --force,
+ * images the content uses that are missing) or the user declined, 2 for
+ * usage and loading errors.
+ */
+async function runCli(args, io) {
+    const cwd = io.cwd || process.cwd();
+    let input = null;
+    let outDirArg = null;
+    let force = false;
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        if (arg === '--out-dir') {
+            const value = args[++i];
+            if (value === undefined) {
+                io.stderr('--out-dir needs a directory\n\n' + USAGE + '\n');
+                return 2;
+            }
+            outDirArg = value;
+        }
+        else if (arg === '--force') {
+            force = true;
+        }
+        else if (arg === '--help' || arg === '-h') {
+            io.stdout(USAGE + '\n');
+            return 0;
+        }
+        else if (arg.indexOf('--') === 0 || input !== null) {
+            io.stderr('unexpected argument: ' + arg + '\n\n' + USAGE + '\n');
+            return 2;
+        }
+        else {
+            input = arg;
+        }
+    }
+    if (input === null) {
+        input = io.ask ? (await io.ask('Directory of the published content (empty: the current directory): ')).trim() : '';
+    }
+    const inputPath = path__namespace.resolve(cwd, input || '.');
+    if (!fs__namespace.existsSync(inputPath)) {
+        io.stderr('not found: ' + inputPath + '\n');
+        return 2;
+    }
+    const single = fs__namespace.statSync(inputPath).isFile();
+    const publishedDir = single ? path__namespace.dirname(inputPath) : inputPath;
+    const files = single ? [inputPath] : publishedFiles(inputPath);
+    if (!files.length) {
+        io.stderr('no published content (Animate HTML5 Canvas JavaScript) in ' + inputPath + '\n');
+        return 2;
+    }
+    const sources = [];
+    let failed = false;
+    // One after another: each is run in a sandbox of its own
+    for (const file of files) {
+        try {
+            const definition = await animateDataConverter.extractPublishedFile(file);
+            sources.push({ file, definition, id: compositionId(definition) });
+        }
+        catch (e) {
+            io.stderr('could not read ' + relative(cwd, file) + ': ' + (e instanceof Error ? e.message : String(e)) + '\n');
+            failed = true;
+        }
+    }
+    if (!sources.length) {
+        return 2;
+    }
+    io.stdout('Published content in ' + relative(cwd, publishedDir) + ':\n');
+    sources.forEach(source => {
+        io.stdout('  ' + path__namespace.basename(source.file) + '  (composition id ' + source.id + ')\n');
+    });
+    const byId = {};
+    sources.forEach(source => {
+        (byId[source.id] = byId[source.id] || []).push(path__namespace.basename(source.file));
+    });
+    Object.keys(byId).filter(id => byId[id].length > 1).forEach(id => {
+        io.stdout('note: ' + byId[id].join(', ') + ' share composition id ' + id + ' (loaded on one page, the later replaces the earlier)\n');
+    });
+    const defaultOut = path__namespace.join(publishedDir, 'generated');
+    let outDir = outDirArg !== null ? path__namespace.resolve(cwd, outDirArg) : defaultOut;
+    let chosen = false;
+    if (outDirArg === null && io.ask) {
+        const answer = (await io.ask('Output directory (empty: ' + relative(cwd, defaultOut) + '): ')).trim();
+        if (answer) {
+            outDir = path__namespace.resolve(cwd, answer);
+            chosen = true;
+        }
+    }
+    if (path__namespace.resolve(outDir) === path__namespace.resolve(publishedDir)) {
+        io.stderr('the output directory is the published directory: runtime content would overwrite the published files of the same names\n');
+        return 2;
+    }
+    if (chosen && io.ask && listFiles(outDir).length) {
+        const answer = (await io.ask(relative(cwd, outDir) + ' is not empty. Overwrite the files written there? (y/N): ')).trim().toLowerCase();
+        if (answer !== 'y' && answer !== 'yes') {
+            io.stdout('Nothing written.\n');
+            return 1;
+        }
+    }
+    const before = listFiles(outDir);
+    const written = {};
+    sources.forEach(source => {
+        const name = path__namespace.basename(source.file);
+        let generated;
+        try {
+            generated = generate(source.definition, name);
+        }
+        catch (e) {
+            io.stderr(name + ': ' + (e instanceof Error ? e.message : String(e)) + '\n');
+            failed = true;
+            return;
+        }
+        generated.warnings.forEach(warning => {
+            io.stderr(name + ': warning: ' + warning + '\n');
+        });
+        if (generated.issues.length) {
+            generated.issues.forEach(issue => {
+                io.stderr(name + ': unsupported: ' + (issue.symbol ? issue.symbol : '(content)') + (issue.slot !== null ? ' slot ' + issue.slot : '') + ': ' + issue.message + '\n');
+            });
+            if (!force) {
+                io.stderr(name + ': not written (' + generated.issues.length + ' unsupported feature(s); --force writes it anyway)\n');
+                failed = true;
+                return;
+            }
+        }
+        const images = [];
+        const missing = [];
+        const outside = [];
+        generated.data.images.forEach(entry => {
+            const local = localImagePath(entry.src);
+            if (local === null) {
+                return;
+            }
+            // Animate writes image paths relative to the published file, below its directory: a path
+            // that leads elsewhere (up out of it, or absolute) is neither read nor copied
+            if (!isBelow(publishedDir, local)) {
+                outside.push(entry.src);
+            }
+            else if (fs__namespace.existsSync(path__namespace.join(publishedDir, local))) {
+                images.push(local);
+            }
+            else {
+                missing.push(entry.src);
+            }
+        });
+        if (outside.length) {
+            io.stderr(name + ': not written: image paths that lead out of its directory: ' + outside.join(', ') + '\n');
+            failed = true;
+            return;
+        }
+        if (missing.length) {
+            io.stderr(name + ': not written: images it uses are missing: ' + missing.join(', ') + '\n');
+            failed = true;
+            return;
+        }
+        fs__namespace.mkdirSync(outDir, { recursive: true });
+        const target = path__namespace.join(outDir, name);
+        fs__namespace.writeFileSync(target, generated.source);
+        written[path__namespace.resolve(target)] = true;
+        images.forEach(image => {
+            const to = path__namespace.join(outDir, image);
+            if (!written[path__namespace.resolve(to)]) {
+                fs__namespace.mkdirSync(path__namespace.dirname(to), { recursive: true });
+                fs__namespace.copyFileSync(path__namespace.join(publishedDir, image), to);
+                written[path__namespace.resolve(to)] = true;
+            }
+        });
+        io.stdout(name + ' -> ' + relative(cwd, target) + '  (composition id ' + generated.id + (images.length ? ', ' + images.length + ' image(s)' : '') + ')\n');
+    });
+    const left = before.filter(file => !written[path__namespace.resolve(file)]);
+    if (left.length) {
+        io.stdout('Not written by this run (remove them if no longer needed):\n');
+        left.forEach(file => {
+            io.stdout('  ' + relative(cwd, file) + '\n');
+        });
+    }
+    return failed ? 1 : 0;
 }
 
 exports.compositionId = compositionId;

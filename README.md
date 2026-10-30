@@ -416,6 +416,19 @@ This matters when definitions are kept as files (`animate-data-converter --out`)
 `VERSION` is the version of the player, and `satisfies(version, range)` tests a version against a range
 written as npm writes it (`0.x || 1.x`, `^1.2.0`, `>=1.0.0 <2.0.0`).
 
+## Claude Code skills
+
+The package comes with skills for Claude Code (Anthropic's AI coding tool) in `dist-skills/`: `pixi-animate-runtime-guide`, which tells it how to generate runtime content and play it, and `animate-data-converter-guide` (the converter the generator runs). To
+let Claude Code use them in your project, copy them into the project's `.claude/skills/`:
+
+```
+mkdir -p .claude/skills
+cp -r node_modules/@tawaship/pixi-animate-runtime/dist-skills/* .claude/skills/
+```
+
+Copy them again after updating the package. Each skill names the versions it was written for; with another
+version, it tells Claude Code to follow the type definitions in `node_modules` where they disagree.
+
 ## How correctness is checked
 
 The player was developed with Claude (Anthropic's AI assistant). Its correctness rests on testing rather
@@ -433,6 +446,7 @@ Known faults are put into the player on purpose to confirm that the comparisons 
 - First release: generates runtime content from content published by Adobe Animate for HTML5 Canvas (the command
   line tool and the API), and plays it on PixiJS 5.3 without CreateJS (`loadContentAsync`, `AnimateContainer`,
   `AnimateController`, with `speed`, `overSpeed` and `smooth`)
+- Claude Code skills in `dist-skills/`, published with the package
 
 ## License
 

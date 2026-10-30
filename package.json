@@ -24,7 +24,8 @@
     "dist",
     "types",
     "bin",
-    "tools"
+    "tools",
+    "dist-skills"
   ],
   "scripts": {
     "rollup": "rollup -c --bundleConfigAsCjs",

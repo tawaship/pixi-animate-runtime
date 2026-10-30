@@ -78,15 +78,30 @@ if (reversed == null) { reversed = false; }
 	props.reversed = reversed;
 	cjs.MovieClip.apply(this,[props]);
 
-	this.actionFrames = [23];
+	this.actionFrames = [0,23,46,89];
 	// timeline functions:
+	this.frame_0 = function() {
+		this.dispatchEvent("frame_0");
+		
+		this.f = function() {
+			console.log("f")
+		};
+	}
 	this.frame_23 = function() {
 		this.a.y = 300
 		console.log(4)
 	}
+	this.frame_46 = function() {
+		this.dispatchEvent("middle_frame");
+		this.f();
+	}
+	this.frame_89 = function() {
+		this.stop();
+		this.dispatchEvent("end_frame");
+	}
 
 	// actions tween:
-	this.timeline.addTween(cjs.Tween.get(this).wait(23).call(this.frame_23).wait(67));
+	this.timeline.addTween(cjs.Tween.get(this).call(this.frame_0).wait(23).call(this.frame_23).wait(23).call(this.frame_46).wait(43).call(this.frame_89).wait(1));
 
 	// レイヤー_1
 	this.a = new lib.シンボル1();

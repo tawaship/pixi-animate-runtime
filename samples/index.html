@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pixi-animate-runtime samples</title>
+<style>
+	body { margin: 0; padding: 16px; font-family: sans-serif; font-size: 14px; background: #f4f4f4; color: #222; }
+	header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+	header select, header button { font-size: 14px; padding: 4px 8px; }
+	#status { font-family: monospace; }
+	#error { color: #c00; white-space: pre-wrap; margin: 0 0 8px; }
+	#view canvas, #view iframe { display: block; border: 1px solid #ccc; background: #fff; }
+	.note { color: #666; font-size: 12px; margin: 0 0 8px; max-width: 900px; }
+	label { user-select: none; }
+</style>
+</head>
+<body>
+<header>
+	<select id="sample" title="Sample" autocomplete="off"></select>
+	<select id="symbol" title="The symbol played as the root" autocomplete="off"></select>
+	<label><input type="radio" name="player" value="runtime" autocomplete="off" checked> pixi-animate-runtime</label>
+	<label id="smoothLabel" title="AnimateContainer's smooth (pixi-animate-runtime only): frames are played by a steady clock, so that small changes of the frame time do not make the playing uneven">(<input type="checkbox" id="smooth" autocomplete="off" checked> smooth)</label>
+	<label><input type="radio" name="player" value="createjs" autocomplete="off"> CreateJS (the published HTML)</label>
+	<button id="toggle">Stop</button>
+	<button id="step">Step</button>
+	<button id="restart">Restart</button>
+	<span id="status"></span>
+</header>
+<p class="note">
+	Each sample is content published from Adobe Animate (<code>&lt;sample&gt;/&lt;name&gt;.html</code> and <code>.js</code>) and the runtime content generated from it
+	with <code>npx pixi-animate-runtime &lt;sample&gt;</code> (<code>&lt;sample&gt;/generated/</code>). Switch the player to compare the two: only one plays at a time,
+	so the frame rate shown is that player's alone. Choosing a symbol plays it as the root, created without arguments.
+</p>
+<p id="error"></p>
+<div id="view"></div>
+
+<script src="../lib/pixi.min.js"></script>
+<script src="../dist/pixi-animate-runtime.js"></script>
+<script>
+(function () {
+	'use strict';
+
+	// Each sample: the directory, and the name of its published file (the symbol its HTML plays as the root)
+	var SAMPLES = [
+		['animation', 'animation'], ['bitmap_fill', 'bitmap_fill'], ['color', 'color'], ['color_vanish', 'color'],
+		['gen_filter', 'gen_filter'], ['gradient', 'gradient'], ['independent', 'independent'], ['interaction', 'interaction'],
+		['mask', 'mask'], ['mask_anim', 'anim'], ['mask_tween', 'tween'], ['mask_vanish', 'mask_vanish'],
+		['mask_vanish_2', 'mask_vanish'], ['motionguide', 'motionguide'], ['multi_ss', 'multi_ss'], ['script-write', 'a'],
+		['script_label', 'script'], ['shape', 'shape'], ['sprite_fill', 'sprite_fill'], ['text', 'text'],
+		['timeline', 'test'], ['transformation', 'transformation']
+	].map(function (s) { return { dir: s[0], name: s[1] }; });
+
+	var R = PIXI.animateRuntime;
+	var sampleSelect = document.getElementById('sample');
+	var symbolSelect = document.getElementById('symbol');
+	var toggle = document.getElementById('toggle');
+	var statusView = document.getElementById('status');
+	var errorView = document.getElementById('error');
+	var view = document.getElementById('view');
+	var smoothCheck = document.getElementById('smooth');
+
+	var session = 0;      // bumps on every (re)start, so that stale async work is dropped
+	var playing = true;
+	var current = null;   // { root, fps, step(), setPlaying(), stop() } of the player shown
+	var meter = { last: null, times: [] };
+
+	function showError(e) {
+		errorView.textContent = e ? String(e && e.stack ? e.stack : e) : '';
+	}
+
+	function loadScript(src) {
+		return new Promise(function (resolve, reject) {
+			var script = document.createElement('script');
+			script.src = src;
+			script.onload = function () { script.remove(); resolve(); };
+			script.onerror = function () { reject(new Error('Could not load ' + src)); };
+			document.body.appendChild(script);
+		});
+	}
+
+	function playerName() {
+		return document.querySelector('input[name="player"]:checked').value;
+	}
+
+	/**
+	 * Loads a sample's runtime content file and the content. Samples can share a
+	 * composition id (copies of one .fla), so the file is loaded every time: it
+	 * registers under its id in place of the sample loaded before, and the id is
+	 * the one whose registration changed.
+	 */
+	function loadContent(sample) {
+		var registry = window[R.CONTENTS_GLOBAL] || {};
+		var before = {};
+		Object.keys(registry).forEach(function (id) { before[id] = registry[id]; });
+		return loadScript(sample.dir + '/generated/' + sample.name + '.js?t=' + Date.now()).then(function () {
+			var now = window[R.CONTENTS_GLOBAL];
+			var id = Object.keys(now).filter(function (key) { return now[key] !== before[key]; })[0];
+			return R.loadContentAsync({ id: id, basepath: sample.dir + '/generated/' });
+		});
+	}
+
+	function fillSymbols(sample, content, selected) {
+		var lib = content.lib;
+		var symbols = Object.keys(lib).filter(function (key) {
+			return key !== sample.name && lib[key].prototype instanceof R.MovieClip;
+		}).sort();
+		symbols.unshift(sample.name);
+		symbolSelect.innerHTML = '';
+		symbols.forEach(function (symbol) {
+			var option = document.createElement('option');
+			option.value = symbol;
+			option.textContent = symbol + (symbol === sample.name ? ' (the root of the published HTML)' : '');
+			symbolSelect.appendChild(option);
+		});
+		symbolSelect.value = symbols.indexOf(selected) >= 0 ? selected : sample.name;
+	}
+
+	/** Plays the content with pixi-animate-runtime, as an application does */
+	function startRuntime(content, symbol) {
+		var props = content.properties;
+		var app = new PIXI.Application({
+			width: props.width,
+			height: props.height,
+			backgroundColor: parseInt(String(props.color).replace('#', ''), 16),
+			antialias: true,
+			resolution: window.devicePixelRatio || 1,
+			autoDensity: true
+		});
+		view.appendChild(app.view);
+
+		var container = new R.AnimateContainer();
+		container.smooth = smoothCheck.checked;
+		app.stage.addChild(container);
+		app.ticker.add(container.handleTick, container);
+		var root = container.addCreatejs(content.create(symbol));
+
+		return {
+			root: root,
+			fps: props.fps,
+			container: container,
+			step: function () { R.tick(root); },
+			setPlaying: function (value) { container.speed = value ? 1 : 0; },
+			stop: function () { app.destroy(true, { children: true }); }
+		};
+	}
+
+	/**
+	 * Plays the published HTML with CreateJS. Its stage is taken off the
+	 * CreateJS Ticker and played here at the content's frame rate (the same rule
+	 * as AnimateContainer), so that it can be stopped and stepped; the chosen
+	 * symbol replaces the root, set up as the HTML sets up its own.
+	 */
+	function startCreatejs(sample, content, symbol, id) {
+		var props = content.properties;
+		var frame = document.createElement('iframe');
+		frame.width = props.width + 4;
+		frame.height = props.height + 4;
+		view.appendChild(frame);
+
+		var player = { root: null, fps: props.fps, frame: frame, raf: 0, t: 0 };
+		player.step = function () { if (player.win) { player.win.stage.update(); } };
+		player.setPlaying = function () {};
+		player.stop = function () { cancelAnimationFrame(player.raf); frame.remove(); };
+
+		return new Promise(function (resolve, reject) {
+			frame.onload = function () {
+				var tries = 0;
+				(function poll() {
+					if (id !== session) { resolve(player); return; }
+					var win = frame.contentWindow;
+					var cjs = win && win.createjs;
+					if (cjs && cjs.Ticker && win.stage && win.exportRoot && cjs.Ticker.hasEventListener('tick')) {
+						cjs.Ticker.removeEventListener('tick', win.stage);
+						var an = win.AdobeAn;
+						var ids = Object.keys(an.compositions);
+						var lib = an.getComposition(ids[ids.length - 1]).getLibrary();
+						var root = new lib[symbol]();
+						if (root.filterCacheList !== undefined && an.handleFilterCache) {
+							root.addEventListener('tick', an.handleFilterCache);
+						}
+						win.stage.removeAllChildren();
+						win.stage.addChild(root);
+						win.exportRoot = root;
+						player.win = win;
+						player.root = root;
+						var last = performance.now();
+						(function loop(now) {
+							var delta = Math.min((now - last) / (1000 / 60), 10);
+							last = now;
+							player.t += delta * (playing ? 1 : 0) * player.fps / 60;
+							var whole = player.t | 0;
+							player.t -= whole;
+							for (var f = 0; f < whole; f++) {
+								win.stage.update();
+							}
+							player.raf = requestAnimationFrame(loop);
+						})(last);
+						resolve(player);
+						return;
+					}
+					if (++tries > 400) {
+						reject(new Error('The published HTML did not start (was lib/createjs.min.js loaded?)'));
+						return;
+					}
+					setTimeout(poll, 25);
+				})();
+			};
+			frame.src = sample.dir + '/' + sample.name + '.html?t=' + Date.now();
+		});
+	}
+
+	function start(keepSymbol) {
+		var id = ++session;
+		if (current) {
+			current.stop();
+			current = null;
+		}
+		view.innerHTML = '';
+		meter = { last: null, times: [] };
+		showError(null);
+
+		var sample = SAMPLES[sampleSelect.selectedIndex];
+		var wanted = keepSymbol ? symbolSelect.value : sample.name;
+		document.getElementById('smoothLabel').hidden = playerName() !== 'runtime';
+		updateHash(wanted);
+		loadContent(sample).then(function (content) {
+			if (id !== session) { return null; }
+			fillSymbols(sample, content, wanted);
+			updateHash(symbolSelect.value);
+			var symbol = symbolSelect.value;
+			return playerName() === 'runtime' ? startRuntime(content, symbol) : startCreatejs(sample, content, symbol, id);
+		}).then(function (player) {
+			if (!player || id !== session) {
+				if (player) { player.stop(); }
+				return;
+			}
+			current = player;
+			current.setPlaying(playing);
+		}).catch(showError);
+	}
+
+	function setPlaying(value) {
+		playing = value;
+		toggle.textContent = playing ? 'Stop' : 'Play';
+		if (current) {
+			current.setPlaying(playing);
+		}
+	}
+
+	/**
+	 * Every choice is kept in the URL's hash (#sample=...&player=...&symbol=...&smooth=...), so that a reload or a
+	 * shared URL opens the same; the form does not restore values by itself (autocomplete off)
+	 */
+	function updateHash(symbol) {
+		var settings = {
+			sample: SAMPLES[sampleSelect.selectedIndex].dir,
+			player: playerName(),
+			symbol: symbol,
+			smooth: smoothCheck.checked ? '1' : '0'
+		};
+		history.replaceState(null, '', '#' + Object.keys(settings).map(function (key) {
+			return key + '=' + encodeURIComponent(settings[key]);
+		}).join('&'));
+	}
+
+	/** The frames the root actually played during the last second, from its timeline position */
+	function measure(now) {
+		var root = current && current.root;
+		var text = '';
+		if (root) {
+			var raw = root.timeline.rawPosition;
+			if (meter.last !== null && raw > meter.last) {
+				for (var i = meter.last; i < raw; i++) { meter.times.push(now); }
+			}
+			meter.last = raw;
+			while (meter.times.length && meter.times[0] < now - 1000) { meter.times.shift(); }
+			text = 'frame ' + root.currentFrame + ' / ' + root.totalFrames;
+			if (playing) {
+				text += '  ' + meter.times.length + ' fps (published at ' + current.fps + ')';
+			}
+		}
+		statusView.textContent = text;
+		requestAnimationFrame(measure);
+	}
+
+	SAMPLES.forEach(function (sample) {
+		var option = document.createElement('option');
+		option.textContent = sample.dir;
+		sampleSelect.appendChild(option);
+	});
+
+	sampleSelect.addEventListener('change', function () { start(false); });
+	symbolSelect.addEventListener('change', function () { start(true); });
+	Array.prototype.forEach.call(document.querySelectorAll('input[name="player"]'), function (input) {
+		input.addEventListener('change', function () { start(true); });
+	});
+	toggle.addEventListener('click', function () { setPlaying(!playing); });
+	// Takes effect at once, without restarting
+	smoothCheck.addEventListener('change', function () {
+		if (current && current.container) { current.container.smooth = smoothCheck.checked; }
+		updateHash(symbolSelect.value);
+	});
+	document.getElementById('step').addEventListener('click', function () {
+		setPlaying(false);
+		if (current) { current.step(); }
+	});
+	document.getElementById('restart').addEventListener('click', function () { start(true); });
+
+	var settings = {};
+	location.hash.slice(1).split('&').forEach(function (pair) {
+		var at = pair.indexOf('=');
+		if (at > 0) { settings[pair.slice(0, at)] = decodeURIComponent(pair.slice(at + 1)); }
+	});
+	sampleSelect.selectedIndex = Math.max(0, SAMPLES.map(function (s) { return s.dir; }).indexOf(settings.sample));
+	var radio = settings.player && document.querySelector('input[name="player"][value="' + settings.player + '"]');
+	if (radio) { radio.checked = true; }
+	if (settings.smooth !== undefined) { smoothCheck.checked = settings.smooth !== '0'; }
+	if (settings.symbol) {
+		var option = document.createElement('option');
+		option.value = settings.symbol;
+		symbolSelect.appendChild(option);
+		symbolSelect.value = settings.symbol;
+	}
+	start(!!settings.symbol);
+	requestAnimationFrame(measure);
+})();
+</script>
+</body>
+</html>

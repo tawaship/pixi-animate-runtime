@@ -7,12 +7,32 @@ definition per symbol. The player builds instances from these definitions on Pix
 without running the published code: creating many instances at once no longer rebuilds each symbol's
 timeline for every instance.
 
+It plays the same content as [@tawaship/pixi-animate-container](https://github.com/tawaship/pixi-animate-container)
+and is used the same way (instances put on a container that the ticker drives); what changes is listed under
+[Coming from pixi-animate-container](#coming-from-pixi-animate-container).
+
 **Status: under development.** What works and what does not yet is listed under [Current limits](#current-limits).
+
+API reference: https://tawaship.github.io/pixi-animate-runtime/docs/
+
+Samples (content published from Animate, played by this package or by CreateJS): https://tawaship.github.io/pixi-animate-runtime/samples/
+
+**Convert only content you trust.** Generating runs the published JavaScript, frame scripts included, in
+Node.js, in a `vm` context that is not a security boundary: code in the file can reach what Node.js can (files,
+commands, the network) with your permissions. Treat a published file as you would treat a script you run:
+convert content published by you or by people you trust. In the browser, the runtime content is as safe as the
+published content would be.
 
 ## What you need
 
 - PixiJS 5.3 (`pixi.js` ^5.3.2) in your application
 - Node.js 18 or later to convert the published file (the conversion does not run in the browser)
+
+## Supported versions
+
+- Content published by **Adobe Animate 24.0.15** for HTML5 Canvas. What this package reads is the form of the published
+  JavaScript, which depends on the version of Animate; content published by other versions has not been checked
+- PixiJS 5.3 (`pixi.js` ^5.3.2). Checked with 5.3.9
 
 ## Converting published content
 
@@ -132,12 +152,17 @@ content's frames.
 - `container.speed` changes the playback speed (`1` is the published frame rate, `0` stops). When the
   display runs slower than the content, one call plays several frames; set `container.overSpeed = false`
   to play at most one frame per call
+- `container.smooth` (`true` by default) keeps the playing even when the time between frames of the display
+  varies a little: the frames follow a steady clock (the usual time between frames of the display), so a
+  display frame coming a little early or late does not leave one call with no frame and the next with two.
+  The clock keeps to the real time, and frames the display misses are still caught up at once. `false`
+  plays by the time of each call as it is, as pixi-animate-container does
 - A movie clip starts from its first frame when it is put on the container. `removeCreatejs(instance)`
   takes it off, and it stops playing
 - `tick(instance)` plays exactly one frame, for stepping through content by hand
 - To play roots on a container of your own (of another framework built on PixiJS), give it an
-  `AnimateController`: `new AnimateController(container)` has the `addCreatejs`, `handleTick`, `speed` and
-  `overSpeed` of `AnimateContainer`, putting the instances on that container
+  `AnimateController`: `new AnimateController(container)` has the `addCreatejs`, `handleTick`, `speed`,
+  `overSpeed` and `smooth` of `AnimateContainer`, putting the instances on that container
 
 For Pixim.js applications, use [@tawaship/pixim-animate-runtime](https://github.com/tawaship/Pixim-animate-runtime): it
 includes this player and loads contents as assets of a Pixim content.
@@ -176,6 +201,42 @@ content.
 Frame scripts can use the names published code uses: `this`, `cjs` / `createjs` (the player's
 CreateJS-compatible classes), and `lib` (the symbol classes). `exportRoot` and `stage` are undefined.
 `playSound()` plays nothing.
+
+## Coming from pixi-animate-container
+
+pixi-animate-container loads CreateJS and the published JavaScript in the browser, runs them, and shows the
+CreateJS display objects through PixiJS. This package does the CreateJS part once, at development time:
+
+- In the browser, only PixiJS, the player and the runtime content files are loaded. CreateJS and the
+  published JavaScript are not
+- After publishing again from Animate, generate the runtime content again: the player does not read the
+  published file
+- Each symbol is defined once and shared by every instance, instead of each instance building its own
+  timeline when it is created
+
+The way content is put on the screen stays the same, under new names:
+
+| pixi-animate-container | pixi-animate-runtime |
+|---|---|
+| `<script>` tags for CreateJS and the published `.js` | A `<script>` tag for the runtime content file (no CreateJS) |
+| `PIXI.animate` | `PIXI.animateRuntime` |
+| `loadAssetAsync(targets)`, giving `lib` | `loadContentAsync(targets)`, giving a content (its classes are in `content.lib`) |
+| `new lib.game()` | `content.create('game')` (`new content.lib.game()` also works, see [Playing content](#playing-content)) |
+| `PIXI.animate.Container` | `AnimateContainer` |
+| `addCreatejs`, `addCreatejsAt`, `removeCreatejs`, `handleTick` | The same |
+| `createjsSpeed` | `speed` |
+| `createjsOverSpeed` | `overSpeed` |
+| (none) | `smooth`: even playing when the time between frames varies (on by default; `false` plays as pixi-animate-container does) |
+| `options: { crossOrigin }` | The same |
+| `CreatejsMovieClip`, `CreatejsShape` and the other wrapper classes | `MovieClip`, `Shape` and the other CreateJS-compatible classes; `instance.pixi` is still the PixiJS node |
+
+What behaves differently:
+
+- `instance.pixi` is always current. The instance and its node share their values (see
+  [Objects and their Pixi nodes](#objects-and-their-pixi-nodes)), so a frame script reading `instance.pixi.x`
+  gets the value just written, not the value of the previous frame
+- Not available: `options.listenFrameEvents` (`endAnimation`, `reachLabel`), `options.useSound` (sound is not
+  played), and CreateJS mouse events on instances (see [Current limits](#current-limits))
 
 ## Current limits
 
@@ -220,6 +281,14 @@ masks, buttons), together with what the PixiJS nodes show (their matrices, masks
 What is drawn is compared too: every test content is drawn by CreateJS and by this player in the same
 headless browser, frame by frame, and the pixels are compared, with differences in antialiasing allowed for.
 Known faults are put into the player on purpose to confirm that the comparisons notice them.
+
+## Change log
+
+### 0.1.0
+
+- First release: generates runtime content from content published by Adobe Animate for HTML5 Canvas (the command
+  line tool and the API), and plays it on PixiJS 5.3 without CreateJS (`loadContentAsync`, `AnimateContainer`,
+  `AnimateController`, with `speed`, `overSpeed` and `smooth`)
 
 ## License
 

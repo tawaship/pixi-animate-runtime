@@ -1,7 +1,6 @@
 {
   "name": "@tawaship/pixi-animate-runtime",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Plays Adobe Animate HTML5 Canvas content on PixiJS from definitions extracted by @tawaship/animate-data-converter.",
   "main": "dist/pixi-animate-runtime.cjs.js",
   "module": "dist/pixi-animate-runtime.esm.js",
@@ -30,7 +29,8 @@
   "scripts": {
     "rollup": "rollup -c --bundleConfigAsCjs",
     "d": "tsc -p tsconfig.player.json --emitDeclarationOnly --declaration --outDir ./types/player && tsc -p tsconfig.generator.json --emitDeclarationOnly --declaration --outDir ./types/generator",
-    "build": "npm run rollup -- --environment PROD && npm run d && echo done."
+    "build": "npm run rollup -- --environment PROD && npm run d && echo done.",
+    "docs": "typedoc"
   },
   "keywords": [
     "pixi.js",
@@ -39,11 +39,19 @@
   ],
   "author": "tawaship",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tawaship/pixi-animate-runtime.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tawaship/pixi-animate-runtime/issues"
+  },
+  "homepage": "https://tawaship.github.io/pixi-animate-runtime/",
   "peerDependencies": {
     "pixi.js": "^5.3.2"
   },
   "dependencies": {
-    "@tawaship/animate-data-converter": "^0.0.0"
+    "@tawaship/animate-data-converter": "^0.1.0"
   },
   "devDependencies": {
     "@rollup/plugin-buble": "^1.0.3",
@@ -53,6 +61,7 @@
     "pixi.js": "5.3.9",
     "rollup": "^4.65.0",
     "tslib": "^2.8.1",
+    "typedoc": "^0.28.20",
     "typescript": "^6.0.3"
   },
   "engines": {

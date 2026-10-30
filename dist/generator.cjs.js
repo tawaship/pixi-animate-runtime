@@ -1,5 +1,5 @@
 /*!
- * @tawaship/pixi-animate-runtime - v0.0.0
+ * @tawaship/pixi-animate-runtime - v0.1.0
  * 
  * @author tawaship (makazu.mori@gmail.com)
  * @license MIT
@@ -190,15 +190,15 @@ function checkVersion(version, range, known) {
 }
 
 /** The version of this package (written in from package.json when the package is built) */
-const VERSION = "0.0.0";
+const VERSION = "0.1.0";
 
 /**
  * The animate-data-converter versions this generator reads definitions of:
  * the range this package depends on, and the version it was built with
  * (written in from package.json when the package is built).
  */
-const CONVERTER_RANGE = "^0.0.0";
-const CONVERTER_KNOWN = "0.0.0";
+const CONVERTER_RANGE = "^0.1.0";
+const CONVERTER_KNOWN = "0.1.0";
 
 /**
  * The eases of CreateJS (createjs.Ease), computed as CreateJS computes them,

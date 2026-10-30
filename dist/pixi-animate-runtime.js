@@ -1,5 +1,5 @@
 /*!
- * @tawaship/pixi-animate-runtime - v0.0.0
+ * @tawaship/pixi-animate-runtime - v0.1.0
  * 
  * @author tawaship (makazu.mori@gmail.com)
  * @license MIT
@@ -2684,7 +2684,7 @@ this.PIXI = this.PIXI || {};
     }
 
     /** The version of this package (written in from package.json when the package is built) */
-    var VERSION = "0.0.0";
+    var VERSION = "0.1.0";
 
     /**
      * The eases of CreateJS (createjs.Ease), computed as CreateJS computes them,
@@ -3346,30 +3346,46 @@ this.PIXI = this.PIXI || {};
 
     /** The frame rate a root plays at when its content does not give one */
     var DEFAULT_FPS = 60;
+    /** How many of the latest deltas the usual delta of the display is the median of */
+    var DELTA_SAMPLES = 30;
+    /** The share of its distance from the real time the steady clock moves by on each call */
+    var PULL = 0.05;
     /**
      * Plays the content roots put on a Pixi container at their content's frame
      * rate (the rate the content was published with). AnimateContainer is a Pixi
      * container with one; a container of another framework can hold one too.
      *
-     * Each handleTick call adds `delta x speed x fps / 60` to every root (delta
-     * being the ticker's: 1 per frame of a 60 fps display) and plays as many whole
-     * frames as that makes, one frame being createjs's tick phase followed by its
-     * resolve phase. The first call after a root is put on only settles it on its
-     * first frame.
+     * Each handleTick call owes every root `delta x speed x fps / 60` frames
+     * (delta being the ticker's: 1 per frame of a 60 fps display) and plays the
+     * whole frames owed. With `smooth`, the frames played follow a steady clock
+     * instead of the deltas themselves: it advances by the usual delta of the
+     * display (the median of the latest ones) on every call, so that small changes
+     * of the delta do not play a frame early or late (0 frames on one call and 2
+     * on the next), and it is pulled toward the real time a little on every call,
+     * and set to it when they are a frame apart (a frame of the display was
+     * missed), so that the content keeps the real time. One frame is createjs's
+     * tick phase followed by its resolve phase. The first call after a root is put
+     * on only settles it on its first frame.
      */
     var AnimateController = function AnimateController(container) {
         /** Playback speed (1 is the content's own frame rate) */
         this.speed = 1;
         /** Whether one call may play more than one frame (when the display runs slower than the content) */
         this.overSpeed = true;
+        /** Whether frames are played by a steady clock, so that small changes of the delta do not make the playing uneven */
+        this.smooth = true;
         this._targets = {};
         this._nextId = 0;
+        /** The latest deltas (a ring of DELTA_SAMPLES) */
+        this._deltas = [];
+        this._nextDelta = 0;
         this._container = container;
     };
     AnimateController.prototype.handleTick = function handleTick (delta) {
             var this$1$1 = this;
 
         var d = delta * this.speed;
+        var usual = this._usualDelta(delta) * this.speed;
         var targets = this._targets;
         Object.keys(targets).forEach(function (key) {
             var target = targets[Number(key)];
@@ -3378,18 +3394,46 @@ this.PIXI = this.PIXI || {};
             }
             var fps = target.root.contentFps != null ? target.root.contentFps : DEFAULT_FPS;
             target.t += d * fps / 60;
-            var whole = target.t | 0;
-            var frames = this$1$1.overSpeed ? whole : Math.min(whole, 1);
+            // The steady clock follows the real time half a step ahead, so that it sits
+            // midway between whole frames, not on one (where the pull alone would move it across)
+            var step = usual * fps / 60;
+            var lead = Math.min(step, 1) / 2;
             if (target.isFirst) {
                 target.isFirst = false;
+                target.clock = target.t + lead;
                 resolveState(target.root);
                 return;
             }
+            if (this$1$1.smooth) {
+                target.clock += step;
+                var behind = target.t + lead - target.clock;
+                if (behind >= 1 || behind <= -1) {
+                    target.clock = target.t + lead;
+                }
+                else {
+                    target.clock += behind * PULL;
+                }
+            }
+            else {
+                target.clock = target.t;
+            }
+            var whole = Math.max(Math.floor(target.clock), 0);
+            var frames = this$1$1.overSpeed ? whole : Math.min(whole, 1);
             target.t -= whole;
+            target.clock -= whole;
             for (var f = 0; f < frames; f++) {
                 tick(target.root);
             }
         });
+    };
+    /** Records a delta and gives the median of the latest ones */
+    AnimateController.prototype._usualDelta = function _usualDelta (delta) {
+        var deltas = this._deltas;
+        deltas[this._nextDelta] = delta;
+        this._nextDelta = (this._nextDelta + 1) % DELTA_SAMPLES;
+        var sorted = deltas.slice().sort(function (a, b) { return a - b; });
+        var middle = sorted.length >> 1;
+        return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
     };
     /** Puts a content object on the container; a MovieClip plays from then on */
     AnimateController.prototype.addCreatejs = function addCreatejs (obj) {
@@ -3423,7 +3467,7 @@ this.PIXI = this.PIXI || {};
                 obj.gotoAndPlay(0);
             }
             var id = this$1$1._nextId++;
-            this$1$1._targets[id] = { root: obj, t: 0, isFirst: true };
+            this$1$1._targets[id] = { root: obj, t: 0, clock: 0, isFirst: true };
             node.once('removed', function () {
                 delete this$1$1._targets[id];
             });
@@ -3446,13 +3490,16 @@ this.PIXI = this.PIXI || {};
         AnimateContainer.prototype = Object.create( superclass && superclass.prototype );
         AnimateContainer.prototype.constructor = AnimateContainer;
 
-        var prototypeAccessors = { speed: { configurable: true },overSpeed: { configurable: true } };
+        var prototypeAccessors = { speed: { configurable: true },overSpeed: { configurable: true },smooth: { configurable: true } };
         /** Playback speed (1 is the content's own frame rate) */
         prototypeAccessors.speed.get = function () { return this._controller.speed; };
         prototypeAccessors.speed.set = function (value) { this._controller.speed = value; };
         /** Whether one call may play more than one frame (when the display runs slower than the content) */
         prototypeAccessors.overSpeed.get = function () { return this._controller.overSpeed; };
         prototypeAccessors.overSpeed.set = function (value) { this._controller.overSpeed = value; };
+        /** Whether frames are played by a steady clock, so that small changes of the delta do not make the playing uneven */
+        prototypeAccessors.smooth.get = function () { return this._controller.smooth; };
+        prototypeAccessors.smooth.set = function (value) { this._controller.smooth = value; };
         AnimateContainer.prototype.handleTick = function handleTick (delta) {
             this._controller.handleTick(delta);
         };

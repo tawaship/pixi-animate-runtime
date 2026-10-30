@@ -58,8 +58,9 @@ my-project/
    npx pixi-animate-runtime animate --out-dir public/animates
    ```
 
-   This writes `public/animates/game.js` (the runtime content) and copies the images it uses into
-   `public/animates/images/`. It prints the content's **composition id**, which the next step needs.
+   It lists what it will write and asks; answer `y`. This writes `public/animates/game.js` (the runtime
+   content) and copies the images it uses into `public/animates/images/`. The list shows the content's
+   **composition id**, which the next step needs.
 
 4. **Play.** In `public/index.html`, load PixiJS, the player and the runtime content, and put the symbol the
    published HTML showed (named after the published file, here `game`) on an `AnimateContainer`:
@@ -121,13 +122,28 @@ that no content uses are not copied, and scripts that are not Animate output are
 | Argument / option | Effect |
 |---|---|
 | a published `.js` file instead of a directory | Converts that file only |
-| `--out-dir <directory>` | Writes straight into that directory instead of `generated/` |
-| `--force` | Writes runtime content even when the content uses features that are not supported |
+| `-o, --out-dir <directory>` | Writes straight into that directory instead of `generated/` |
+| `-r, --recursive` | Also converts the published files in the directories below (not in `node_modules`, nor in directories whose name starts with `.`). With `-o`, each is written below that directory at the same relative path (`title/title.js` to `<directory>/title/title.js`); without it, into `generated/` next to its published file |
+| `-y, --yes` | Writes without asking anything (directories not given take their defaults). Needed when run from a script or CI |
+| `-f, --force` | Writes runtime content even when the content uses features that are not supported |
+| `-h, --help` | Shows the usage |
+
+Before writing anything, the tool lists each published file with where its runtime content goes, its
+composition id, the number of images it uses, and whether it replaces a file already there:
+
+```
+Runtime content to write (from assets/animates):
+  game.js -> assets/animates/generated/game.js  (composition id 2FA8E0C7230941478CE2CA3DB82DBEDF, 3 image(s))
+Write these? (y/N):
+```
+
+Nothing is written unless you answer `y`. Run from a script or CI, where nobody can answer (not a terminal),
+it only lists and writes nothing unless `-y` is given; with `-y`, it asks nothing and writes. Run in a terminal
+without a directory (and without `-y`), the tool first asks for it, lists the published files it found, and
+asks where to write (empty: `generated/`).
 
 Nothing is ever deleted: files already in the output directory that the run did not write are listed, for you
-to remove when they are no longer needed. Run in a terminal without a directory, the tool asks for it, lists
-the published files it found with their composition ids, and asks where to write (empty: `generated/`); a
-directory you name that is not empty is written to only after you answer `y`.
+to remove when they are no longer needed.
 
 A content is not written when it uses unsupported features (each one is listed), when an image it uses is
 missing, or when the path of an image leads out of the published directory (Animate writes them below it);
@@ -137,7 +153,31 @@ file cannot be read.
 On Windows, `tools/pixi-animate-runtime.bat` (in the installed package) does the same: copy it into your
 project, then drop the published directory on it, or double-click it to be asked.
 
-The same is available from Node:
+The same is available from Node, in two steps, so that a script of your own can show the plan, ask its own
+questions or choose what to write in between:
+
+```js
+const { planGeneration, writeGeneration } = require('@tawaship/pixi-animate-runtime/generator');
+
+planGeneration({ input: 'assets/animates', outDir: 'public/animates', recursive: true }).then(plan => {
+	plan.contents.forEach(content => {
+		console.log(content.name, '->', content.out, content.problem || '');
+	});
+	const result = writeGeneration(plan);
+	console.log(result.written.length + ' file(s) written');
+});
+```
+
+`planGeneration(options)` takes what the command line takes (`input`, `outDir`, `recursive`, `force`, `cwd`),
+makes the runtime content and works out where everything goes, but writes nothing. Each of `plan.contents` is
+one published file: `name`, `id` (composition id), `out` (where it goes), `exists` (a file is already there),
+`images` (`from` and `to`), `issues`, `warnings`, and `problem`, the reason it is not written (`null` when it
+is). `writeGeneration(plan)` writes the runtime content as the plan made it (a published file changed in
+between does not change what is written), copies the images, and returns `written` (the files it wrote) and
+`left` (the files already in the output directories that it did not write). It deletes nothing. To write only some of the contents, give it a plan with
+the others removed from `contents`.
+
+For one published file without writing anything:
 
 ```js
 const { generateFromPublishedFile } = require('@tawaship/pixi-animate-runtime/generator');

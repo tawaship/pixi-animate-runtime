@@ -54,8 +54,9 @@ player with a bundler).</p>
 <pre><code><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-0">pixi</span><span class="hl-1">-</span><span class="hl-0">animate</span><span class="hl-1">-</span><span class="hl-0">runtime</span><span class="hl-1"> </span><span class="hl-0">animate</span><span class="hl-1"> --</span><span class="hl-0">out</span><span class="hl-1">-</span><span class="hl-0">dir</span><span class="hl-1"> </span><span class="hl-0">public</span><span class="hl-1">/</span><span class="hl-0">animates</span>
 </code><button>Copy</button></pre>
 
-<p>This writes <code>public/animates/game.js</code> (the runtime content) and copies the images it uses into
-<code>public/animates/images/</code>. It prints the content's <strong>composition id</strong>, which the next step needs.</p>
+<p>It lists what it will write and asks; answer <code>y</code>. This writes <code>public/animates/game.js</code> (the runtime
+content) and copies the images it uses into <code>public/animates/images/</code>. The list shows the content's
+<strong>composition id</strong>, which the next step needs.</p>
 </li>
 <li>
 <p><strong>Play.</strong> In <code>public/index.html</code>, load PixiJS, the player and the runtime content, and put the symbol the
@@ -109,26 +110,58 @@ that no content uses are not copied, and scripts that are not Animate output are
 <td>Converts that file only</td>
 </tr>
 <tr>
-<td><code>--out-dir &lt;directory&gt;</code></td>
+<td><code>-o, --out-dir &lt;directory&gt;</code></td>
 <td>Writes straight into that directory instead of <code>generated/</code></td>
 </tr>
 <tr>
-<td><code>--force</code></td>
+<td><code>-r, --recursive</code></td>
+<td>Also converts the published files in the directories below (not in <code>node_modules</code>, nor in directories whose name starts with <code>.</code>). With <code>-o</code>, each is written below that directory at the same relative path (<code>title/title.js</code> to <code>&lt;directory&gt;/title/title.js</code>); without it, into <code>generated/</code> next to its published file</td>
+</tr>
+<tr>
+<td><code>-y, --yes</code></td>
+<td>Writes without asking anything (directories not given take their defaults). Needed when run from a script or CI</td>
+</tr>
+<tr>
+<td><code>-f, --force</code></td>
 <td>Writes runtime content even when the content uses features that are not supported</td>
+</tr>
+<tr>
+<td><code>-h, --help</code></td>
+<td>Shows the usage</td>
 </tr>
 </tbody>
 </table>
+<p>Before writing anything, the tool lists each published file with where its runtime content goes, its
+composition id, the number of images it uses, and whether it replaces a file already there:</p>
+<pre><code><span class="hl-0">Runtime</span><span class="hl-1"> </span><span class="hl-0">content</span><span class="hl-1"> </span><span class="hl-0">to</span><span class="hl-1"> </span><span class="hl-2">write</span><span class="hl-1"> (</span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-0">assets</span><span class="hl-1">/</span><span class="hl-0">animates</span><span class="hl-1">):</span><br/><span class="hl-1">  </span><span class="hl-0">game</span><span class="hl-1">.</span><span class="hl-0">js</span><span class="hl-1"> -&gt; </span><span class="hl-0">assets</span><span class="hl-1">/</span><span class="hl-0">animates</span><span class="hl-1">/</span><span class="hl-0">generated</span><span class="hl-1">/</span><span class="hl-0">game</span><span class="hl-1">.</span><span class="hl-2">js</span><span class="hl-1">  (</span><span class="hl-0">composition</span><span class="hl-1"> </span><span class="hl-0">id</span><span class="hl-1"> 2</span><span class="hl-10">FA8E0C7230941478CE2CA3DB82DBEDF</span><span class="hl-1">, </span><span class="hl-3">3</span><span class="hl-1"> </span><span class="hl-2">image</span><span class="hl-1">(</span><span class="hl-0">s</span><span class="hl-1">))</span><br/><span class="hl-0">Write</span><span class="hl-1"> </span><span class="hl-0">these</span><span class="hl-1">? (</span><span class="hl-0">y</span><span class="hl-1">/</span><span class="hl-10">N</span><span class="hl-1">):</span>
+</code><button>Copy</button></pre>
+
+<p>Nothing is written unless you answer <code>y</code>. Run from a script or CI, where nobody can answer (not a terminal),
+it only lists and writes nothing unless <code>-y</code> is given; with <code>-y</code>, it asks nothing and writes. Run in a terminal
+without a directory (and without <code>-y</code>), the tool first asks for it, lists the published files it found, and
+asks where to write (empty: <code>generated/</code>).</p>
 <p>Nothing is ever deleted: files already in the output directory that the run did not write are listed, for you
-to remove when they are no longer needed. Run in a terminal without a directory, the tool asks for it, lists
-the published files it found with their composition ids, and asks where to write (empty: <code>generated/</code>); a
-directory you name that is not empty is written to only after you answer <code>y</code>.</p>
+to remove when they are no longer needed.</p>
 <p>A content is not written when it uses unsupported features (each one is listed), when an image it uses is
 missing, or when the path of an image leads out of the published directory (Animate writes them below it);
 the other contents still are, and the command then exits with <code>1</code>. It exits with <code>2</code> when the directory or
 file cannot be read.</p>
 <p>On Windows, <code>tools/pixi-animate-runtime.bat</code> (in the installed package) does the same: copy it into your
 project, then drop the published directory on it, or double-click it to be asked.</p>
-<p>The same is available from Node:</p>
+<p>The same is available from Node, in two steps, so that a script of your own can show the plan, ask its own
+questions or choose what to write in between:</p>
+<pre><code class="js"><span class="hl-9">const</span><span class="hl-1"> { </span><span class="hl-10">planGeneration</span><span class="hl-1">, </span><span class="hl-10">writeGeneration</span><span class="hl-1"> } = </span><span class="hl-2">require</span><span class="hl-1">(</span><span class="hl-11">&#39;@tawaship/pixi-animate-runtime/generator&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-2">planGeneration</span><span class="hl-1">({ </span><span class="hl-0">input:</span><span class="hl-1"> </span><span class="hl-11">&#39;assets/animates&#39;</span><span class="hl-1">, </span><span class="hl-0">outDir:</span><span class="hl-1"> </span><span class="hl-11">&#39;public/animates&#39;</span><span class="hl-1">, </span><span class="hl-0">recursive:</span><span class="hl-1"> </span><span class="hl-9">true</span><span class="hl-1"> }).</span><span class="hl-2">then</span><span class="hl-1">(</span><span class="hl-0">plan</span><span class="hl-1"> </span><span class="hl-9">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">	</span><span class="hl-0">plan</span><span class="hl-1">.</span><span class="hl-0">contents</span><span class="hl-1">.</span><span class="hl-2">forEach</span><span class="hl-1">(</span><span class="hl-0">content</span><span class="hl-1"> </span><span class="hl-9">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">		</span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-2">log</span><span class="hl-1">(</span><span class="hl-0">content</span><span class="hl-1">.</span><span class="hl-0">name</span><span class="hl-1">, </span><span class="hl-11">&#39;-&gt;&#39;</span><span class="hl-1">, </span><span class="hl-0">content</span><span class="hl-1">.</span><span class="hl-0">out</span><span class="hl-1">, </span><span class="hl-0">content</span><span class="hl-1">.</span><span class="hl-0">problem</span><span class="hl-1"> || </span><span class="hl-11">&#39;&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">	});</span><br/><span class="hl-1">	</span><span class="hl-9">const</span><span class="hl-1"> </span><span class="hl-10">result</span><span class="hl-1"> = </span><span class="hl-2">writeGeneration</span><span class="hl-1">(</span><span class="hl-0">plan</span><span class="hl-1">);</span><br/><span class="hl-1">	</span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-2">log</span><span class="hl-1">(</span><span class="hl-0">result</span><span class="hl-1">.</span><span class="hl-0">written</span><span class="hl-1">.</span><span class="hl-0">length</span><span class="hl-1"> + </span><span class="hl-11">&#39; file(s) written&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
+</code><button type="button">Copy</button></pre>
+
+<p><code>planGeneration(options)</code> takes what the command line takes (<code>input</code>, <code>outDir</code>, <code>recursive</code>, <code>force</code>, <code>cwd</code>),
+makes the runtime content and works out where everything goes, but writes nothing. Each of <code>plan.contents</code> is
+one published file: <code>name</code>, <code>id</code> (composition id), <code>out</code> (where it goes), <code>exists</code> (a file is already there),
+<code>images</code> (<code>from</code> and <code>to</code>), <code>issues</code>, <code>warnings</code>, and <code>problem</code>, the reason it is not written (<code>null</code> when it
+is). <code>writeGeneration(plan)</code> writes the runtime content as the plan made it (a published file changed in
+between does not change what is written), copies the images, and returns <code>written</code> (the files it wrote) and
+<code>left</code> (the files already in the output directories that it did not write). It deletes nothing. To write only some of the contents, give it a plan with
+the others removed from <code>contents</code>.</p>
+<p>For one published file without writing anything:</p>
 <pre><code class="js"><span class="hl-9">const</span><span class="hl-1"> { </span><span class="hl-10">generateFromPublishedFile</span><span class="hl-1"> } = </span><span class="hl-2">require</span><span class="hl-1">(</span><span class="hl-11">&#39;@tawaship/pixi-animate-runtime/generator&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-2">generateFromPublishedFile</span><span class="hl-1">(</span><span class="hl-11">&#39;assets/animates/game.js&#39;</span><span class="hl-1">).</span><span class="hl-2">then</span><span class="hl-1">(</span><span class="hl-0">generated</span><span class="hl-1"> </span><span class="hl-9">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">	</span><span class="hl-2">require</span><span class="hl-1">(</span><span class="hl-11">&#39;fs&#39;</span><span class="hl-1">).</span><span class="hl-2">writeFileSync</span><span class="hl-1">(</span><span class="hl-11">&#39;game.js&#39;</span><span class="hl-1">, </span><span class="hl-0">generated</span><span class="hl-1">.</span><span class="hl-0">source</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
 </code><button type="button">Copy</button></pre>
 

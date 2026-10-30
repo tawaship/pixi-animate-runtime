@@ -16,10 +16,12 @@
 <li class="">
 <div class="tsd-signature tsd-anchor-link" id="runcli"><span class="tsd-kind-call-signature">runCli</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">args</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">,</span> <span class="tsd-kind-parameter">io</span><span class="tsd-signature-symbol">:</span> <a href="../interfaces/generator.ICliIO.html" class="tsd-signature-type tsd-kind-interface">ICliIO</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">&gt;</span><a href="#runcli" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The command line tool. Returns the exit code: 0 when every content was
+<div class="tsd-comment tsd-typography"><p>The command line tool: <a href="generator.planGeneration.html" class="tsd-kind-function">planGeneration</a>, the plan listed (and, in a
+terminal, confirmed; without one, written only with -y), then
+<a href="generator.writeGeneration.html" class="tsd-kind-function">writeGeneration</a>. Returns the exit code: 0 when every content was
 written, 1 when some could not be (unsupported features without --force,
-images the content uses that are missing) or the user declined, 2 for
-usage and loading errors.</p>
+images the content uses that are missing) or nothing was written for want of
+a &quot;y&quot;, 2 for usage and loading errors.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -28,7 +30,7 @@ usage and loading errors.</p>
 <li><span><span class="tsd-kind-parameter">io</span>: <a href="../interfaces/generator.ICliIO.html" class="tsd-signature-type tsd-kind-interface">ICliIO</a></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/generator/cli.ts:94</li></ul></aside></div></li></ul></section></div>
+<li>Defined in packages/pixi-animate-runtime/src/generator/cli.ts:75</li></ul></aside></div></li></ul></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

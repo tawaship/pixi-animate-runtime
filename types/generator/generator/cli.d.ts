@@ -7,9 +7,11 @@ export interface ICliIO {
     cwd?: string;
 }
 /**
- * The command line tool. Returns the exit code: 0 when every content was
+ * The command line tool: {@link planGeneration}, the plan listed (and, in a
+ * terminal, confirmed; without one, written only with -y), then
+ * {@link writeGeneration}. Returns the exit code: 0 when every content was
  * written, 1 when some could not be (unsupported features without --force,
- * images the content uses that are missing) or the user declined, 2 for
- * usage and loading errors.
+ * images the content uses that are missing) or nothing was written for want of
+ * a "y", 2 for usage and loading errors.
  */
 export declare function runCli(args: string[], io: ICliIO): Promise<number>;

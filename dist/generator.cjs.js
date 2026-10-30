@@ -667,20 +667,6 @@ function generateFromPublishedFile(publishedPath) {
     return animateDataConverter.extractPublishedFile(publishedPath).then(definition => generate(definition, path__namespace.basename(publishedPath)));
 }
 
-const USAGE = [
-    'Usage: pixi-animate-runtime [<published directory or file>] [--out-dir <directory>] [--force]',
-    '',
-    '  <published directory>  a directory Animate published HTML5 Canvas content into: every published',
-    '                         JavaScript file directly in it is turned into runtime content',
-    '  <published file>       one published JavaScript file',
-    '  --out-dir <directory>  where to write (default: generated/ in the published directory)',
-    '  --force                write runtime content even when the content uses unsupported features',
-    '',
-    'Each runtime content file gets the name of its published file, and the images it uses are copied',
-    'next to it at the same relative paths. Nothing is ever deleted: files already in the output',
-    'directory that this run did not write are listed. Asked for the directories when run in a',
-    'terminal without them.'
-].join('\n');
 /** Whether a JavaScript file is Animate HTML5 Canvas output (it registers a composition) */
 function isPublished(file) {
     return /\.compositions\s*\[/.test(fs__namespace.readFileSync(file, 'utf8'));
@@ -691,6 +677,22 @@ function publishedFiles(dir) {
         .map(entry => path__namespace.join(dir, entry.name))
         .filter(isPublished)
         .sort();
+}
+/** Directories the recursive search does not enter: packages, and hidden ones (.git and the like) */
+function isSkipped(name) {
+    return name === 'node_modules' || name.charAt(0) === '.';
+}
+/** The published files in a directory and in the directories below it */
+function publishedFilesBelow(dir) {
+    const files = publishedFiles(dir);
+    fs__namespace.readdirSync(dir, { withFileTypes: true })
+        .filter(entry => entry.isDirectory() && !isSkipped(entry.name))
+        .map(entry => entry.name)
+        .sort()
+        .forEach(name => {
+        publishedFilesBelow(path__namespace.join(dir, name)).forEach(file => files.push(file));
+    });
+    return files;
 }
 /** The local file of an image path of the manifest (its query and hash left out), or null for a URL that is not a file */
 function localImagePath(src) {
@@ -723,38 +725,242 @@ function listFiles(dir) {
     });
     return files;
 }
-function relative(from, file) {
+/** A path from a directory, "/" separated */
+function relativePath(from, file) {
     return path__namespace.relative(from, file).split(path__namespace.sep).join('/') || '.';
 }
 /**
- * The command line tool. Returns the exit code: 0 when every content was
+ * The published files an input names, and the directory their names are
+ * taken from. Only reads the files (nothing is run). Throws when the input
+ * does not exist or has no published file.
+ */
+function findPublished(input, recursive, cwd) {
+    const inputPath = path__namespace.resolve(cwd || process.cwd(), input);
+    if (!fs__namespace.existsSync(inputPath)) {
+        throw new Error('not found: ' + inputPath);
+    }
+    const single = fs__namespace.statSync(inputPath).isFile();
+    const files = single ? [inputPath] : recursive ? publishedFilesBelow(inputPath) : publishedFiles(inputPath);
+    if (!files.length) {
+        throw new Error('no published content (Animate HTML5 Canvas JavaScript) in ' + inputPath + (recursive ? ' or below it' : ''));
+    }
+    return { root: single ? path__namespace.dirname(inputPath) : inputPath, files };
+}
+/** The local images a generated content uses (paths from its published directory), and why it cannot be written if it cannot */
+function imagesOf(generated, publishedDir) {
+    const images = [];
+    const missing = [];
+    const outside = [];
+    generated.data.images.forEach(entry => {
+        const local = localImagePath(entry.src);
+        if (local === null) {
+            return;
+        }
+        // Animate writes image paths relative to the published file, below its directory: a path
+        // that leads elsewhere (up out of it, or absolute) is neither read nor copied
+        if (!isBelow(publishedDir, local)) {
+            outside.push(entry.src);
+        }
+        else if (fs__namespace.existsSync(path__namespace.join(publishedDir, local))) {
+            images.push(local);
+        }
+        else {
+            missing.push(entry.src);
+        }
+    });
+    if (outside.length) {
+        return { images, problem: 'image paths that lead out of its directory: ' + outside.join(', ') };
+    }
+    if (missing.length) {
+        return { images, problem: 'images it uses are missing: ' + missing.join(', ') };
+    }
+    return { images, problem: null };
+}
+/**
+ * Finds the published files, makes their runtime content and works out where
+ * everything would be written, without writing anything. Each published file
+ * is run in a sandbox of its own, one after another. What cannot be written
+ * (a file that cannot be read, unsupported features without force, missing
+ * images) is in the plan with its problem. Throws when the input does not
+ * exist, has no published file, or the output would be a published directory.
+ * {@link writeGeneration} writes the plan.
+ */
+async function planGeneration(options) {
+    const cwd = options.cwd || process.cwd();
+    const found = findPublished(options.input, options.recursive, cwd);
+    const root = found.root;
+    const outRoot = options.outDir !== undefined && options.outDir !== null ? path__namespace.resolve(cwd, options.outDir) : null;
+    // Below the output directory at the path of its published file from the root, or into generated/ next to its published file
+    const outDirOf = (file) => outRoot !== null ? path__namespace.join(outRoot, path__namespace.relative(root, path__namespace.dirname(file))) : path__namespace.join(path__namespace.dirname(file), 'generated');
+    if (found.files.some(file => path__namespace.resolve(outDirOf(file)) === path__namespace.resolve(path__namespace.dirname(file)))) {
+        throw new Error('the output directory is the published directory: runtime content would overwrite the published files of the same names');
+    }
+    const contents = [];
+    // One after another: each is run in a sandbox of its own
+    for (const file of found.files) {
+        const outDir = outDirOf(file);
+        const out = path__namespace.join(outDir, path__namespace.basename(file));
+        const content = {
+            published: file,
+            name: relativePath(root, file),
+            id: null,
+            out,
+            exists: fs__namespace.existsSync(out),
+            images: [],
+            source: null,
+            issues: [],
+            warnings: [],
+            problem: null
+        };
+        contents.push(content);
+        try {
+            const definition = await animateDataConverter.extractPublishedFile(file);
+            content.id = compositionId(definition);
+            const generated = generate(definition, path__namespace.basename(file));
+            content.issues = generated.issues;
+            content.warnings = generated.warnings;
+            const images = imagesOf(generated, path__namespace.dirname(file));
+            content.images = images.images.map(image => ({ from: path__namespace.join(path__namespace.dirname(file), image), to: path__namespace.join(outDir, image) }));
+            if (generated.issues.length && !options.force) {
+                content.problem = generated.issues.length + ' unsupported feature(s)';
+            }
+            else if (images.problem !== null) {
+                content.problem = images.problem;
+            }
+            else {
+                content.source = generated.source;
+            }
+        }
+        catch (e) {
+            content.problem = (content.id === null ? 'could not read: ' : '') + (e instanceof Error ? e.message : String(e));
+        }
+    }
+    const existing = [];
+    (outRoot !== null ? [outRoot] : contents.map(content => path__namespace.dirname(content.out)).filter((dir, i, all) => all.indexOf(dir) === i)).forEach(dir => {
+        listFiles(dir).forEach(file => existing.push(file));
+    });
+    return { root, contents, existing };
+}
+/**
+ * Writes a plan made by {@link planGeneration}: the runtime content it made
+ * (as it was when the plan was made) and copies of the images. The contents
+ * with a problem are not written. Nothing is deleted.
+ */
+function writeGeneration(plan) {
+    const written = {};
+    const files = [];
+    const add = (file) => {
+        written[path__namespace.resolve(file)] = true;
+        files.push(file);
+    };
+    plan.contents.forEach(content => {
+        if (content.source === null || content.problem !== null) {
+            return;
+        }
+        fs__namespace.mkdirSync(path__namespace.dirname(content.out), { recursive: true });
+        fs__namespace.writeFileSync(content.out, content.source);
+        add(content.out);
+        content.images.forEach(image => {
+            if (!written[path__namespace.resolve(image.to)]) {
+                fs__namespace.mkdirSync(path__namespace.dirname(image.to), { recursive: true });
+                fs__namespace.copyFileSync(image.from, image.to);
+                add(image.to);
+            }
+        });
+    });
+    return { written: files, left: plan.existing.filter(file => !written[path__namespace.resolve(file)]) };
+}
+
+const USAGE = [
+    'Usage: pixi-animate-runtime [<published directory or file>] [-o <directory>] [-r] [-y] [-f]',
+    '',
+    '  <published directory>      a directory Animate published HTML5 Canvas content into: every published',
+    '                             JavaScript file directly in it is turned into runtime content',
+    '  <published file>           one published JavaScript file',
+    '  -o, --out-dir <directory>  where to write (default: generated/ in the published directory)',
+    '  -r, --recursive            also look in the directories below it (not node_modules, nor directories',
+    '                             whose name starts with "."); with -o, each content is written below it at',
+    '                             the same relative path, and otherwise into generated/ next to its file',
+    '  -y, --yes                  write without asking anything (needed when not run in a terminal)',
+    '  -f, --force                write runtime content even when the content uses unsupported features',
+    '  -h, --help                 show this',
+    '',
+    'Each runtime content file gets the name of its published file, and the images it uses are copied',
+    'next to it at the same relative paths. What would be written is listed first, and written only',
+    'when you answer "y" (or with -y; run from a script or CI without -y, nothing is written). In a',
+    'terminal, you are also asked for the directories that are not given. Nothing is ever deleted:',
+    'files already in the output directory that this run did not write are listed.'
+].join('\n');
+/** Lists what a plan writes and what it does not (problems, unsupported features and warnings on stderr) */
+function showPlan(plan, force, cwd, io) {
+    plan.contents.forEach(content => {
+        content.warnings.forEach(warning => {
+            io.stderr(content.name + ': warning: ' + warning + '\n');
+        });
+        content.issues.forEach(issue => {
+            io.stderr(content.name + ': unsupported: ' + (issue.symbol ? issue.symbol : '(content)') + (issue.slot !== null ? ' slot ' + issue.slot : '') + ': ' + issue.message + '\n');
+        });
+        if (content.problem !== null) {
+            io.stderr(content.name + ': not written: ' + content.problem + (content.issues.length && !force ? ' (--force writes it anyway)' : '') + '\n');
+        }
+    });
+    const writes = plan.contents.filter(content => content.problem === null);
+    if (writes.length) {
+        io.stdout('Runtime content to write (from ' + relativePath(cwd, plan.root) + '):\n');
+        writes.forEach(content => {
+            io.stdout('  ' + content.name + ' -> ' + relativePath(cwd, content.out) + '  (composition id ' + content.id +
+                (content.images.length ? ', ' + content.images.length + ' image(s)' : '') + (content.exists ? ', replaces the file there' : '') + ')\n');
+        });
+    }
+    const byId = {};
+    plan.contents.forEach(content => {
+        if (content.id !== null) {
+            (byId[content.id] = byId[content.id] || []).push(content.name);
+        }
+    });
+    Object.keys(byId).filter(id => byId[id].length > 1).forEach(id => {
+        io.stdout('note: ' + byId[id].join(', ') + ' share composition id ' + id + ' (loaded on one page, the later replaces the earlier)\n');
+    });
+}
+/**
+ * The command line tool: {@link planGeneration}, the plan listed (and, in a
+ * terminal, confirmed; without one, written only with -y), then
+ * {@link writeGeneration}. Returns the exit code: 0 when every content was
  * written, 1 when some could not be (unsupported features without --force,
- * images the content uses that are missing) or the user declined, 2 for
- * usage and loading errors.
+ * images the content uses that are missing) or nothing was written for want of
+ * a "y", 2 for usage and loading errors.
  */
 async function runCli(args, io) {
     const cwd = io.cwd || process.cwd();
     let input = null;
-    let outDirArg = null;
+    let outDir = null;
     let force = false;
+    let recursive = false;
+    let yes = false;
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
-        if (arg === '--out-dir') {
+        if (arg === '--out-dir' || arg === '-o') {
             const value = args[++i];
             if (value === undefined) {
-                io.stderr('--out-dir needs a directory\n\n' + USAGE + '\n');
+                io.stderr(arg + ' needs a directory\n\n' + USAGE + '\n');
                 return 2;
             }
-            outDirArg = value;
+            outDir = value;
         }
-        else if (arg === '--force') {
+        else if (arg === '--force' || arg === '-f') {
             force = true;
+        }
+        else if (arg === '--recursive' || arg === '-r') {
+            recursive = true;
+        }
+        else if (arg === '--yes' || arg === '-y') {
+            yes = true;
         }
         else if (arg === '--help' || arg === '-h') {
             io.stdout(USAGE + '\n');
             return 0;
         }
-        else if (arg.indexOf('--') === 0 || input !== null) {
+        else if (arg.charAt(0) === '-' || input !== null) {
             io.stderr('unexpected argument: ' + arg + '\n\n' + USAGE + '\n');
             return 2;
         }
@@ -762,144 +968,64 @@ async function runCli(args, io) {
             input = arg;
         }
     }
+    // -y: no questions at all (what is not given takes its default)
+    const ask = yes ? undefined : io.ask;
     if (input === null) {
-        input = io.ask ? (await io.ask('Directory of the published content (empty: the current directory): ')).trim() : '';
+        input = ask ? (await ask('Directory of the published content (empty: the current directory): ')).trim() : '';
     }
-    const inputPath = path__namespace.resolve(cwd, input || '.');
-    if (!fs__namespace.existsSync(inputPath)) {
-        io.stderr('not found: ' + inputPath + '\n');
-        return 2;
-    }
-    const single = fs__namespace.statSync(inputPath).isFile();
-    const publishedDir = single ? path__namespace.dirname(inputPath) : inputPath;
-    const files = single ? [inputPath] : publishedFiles(inputPath);
-    if (!files.length) {
-        io.stderr('no published content (Animate HTML5 Canvas JavaScript) in ' + inputPath + '\n');
-        return 2;
-    }
-    const sources = [];
-    let failed = false;
-    // One after another: each is run in a sandbox of its own
-    for (const file of files) {
+    input = input || '.';
+    if (outDir === null && ask) {
+        // The published files found (by name: they are run when the plan is made), then where to write them
+        let found;
         try {
-            const definition = await animateDataConverter.extractPublishedFile(file);
-            sources.push({ file, definition, id: compositionId(definition) });
+            found = findPublished(input, recursive, cwd);
         }
         catch (e) {
-            io.stderr('could not read ' + relative(cwd, file) + ': ' + (e instanceof Error ? e.message : String(e)) + '\n');
-            failed = true;
+            io.stderr((e instanceof Error ? e.message : String(e)) + '\n');
+            return 2;
         }
+        io.stdout('Published content in ' + relativePath(cwd, found.root) + ':\n');
+        found.files.forEach(file => {
+            io.stdout('  ' + relativePath(found.root, file) + '\n');
+        });
+        const answer = (await ask('Output directory (empty: ' + (recursive ? 'generated/ next to each published file' : relativePath(cwd, path__namespace.join(found.root, 'generated'))) + '): ')).trim();
+        outDir = answer || null;
     }
-    if (!sources.length) {
+    let plan;
+    try {
+        plan = await planGeneration({ input, outDir, recursive, force, cwd });
+    }
+    catch (e) {
+        io.stderr((e instanceof Error ? e.message : String(e)) + '\n');
         return 2;
     }
-    io.stdout('Published content in ' + relative(cwd, publishedDir) + ':\n');
-    sources.forEach(source => {
-        io.stdout('  ' + path__namespace.basename(source.file) + '  (composition id ' + source.id + ')\n');
-    });
-    const byId = {};
-    sources.forEach(source => {
-        (byId[source.id] = byId[source.id] || []).push(path__namespace.basename(source.file));
-    });
-    Object.keys(byId).filter(id => byId[id].length > 1).forEach(id => {
-        io.stdout('note: ' + byId[id].join(', ') + ' share composition id ' + id + ' (loaded on one page, the later replaces the earlier)\n');
-    });
-    const defaultOut = path__namespace.join(publishedDir, 'generated');
-    let outDir = outDirArg !== null ? path__namespace.resolve(cwd, outDirArg) : defaultOut;
-    let chosen = false;
-    if (outDirArg === null && io.ask) {
-        const answer = (await io.ask('Output directory (empty: ' + relative(cwd, defaultOut) + '): ')).trim();
-        if (answer) {
-            outDir = path__namespace.resolve(cwd, answer);
-            chosen = true;
-        }
-    }
-    if (path__namespace.resolve(outDir) === path__namespace.resolve(publishedDir)) {
-        io.stderr('the output directory is the published directory: runtime content would overwrite the published files of the same names\n');
+    showPlan(plan, force, cwd, io);
+    if (plan.contents.every(content => content.id === null)) {
         return 2;
     }
-    if (chosen && io.ask && listFiles(outDir).length) {
-        const answer = (await io.ask(relative(cwd, outDir) + ' is not empty. Overwrite the files written there? (y/N): ')).trim().toLowerCase();
+    const failed = plan.contents.some(content => content.problem !== null);
+    if (plan.contents.every(content => content.problem !== null)) {
+        io.stdout('Nothing to write.\n');
+        return 1;
+    }
+    if (!yes) {
+        // Nobody to ask (not a terminal): written only with -y
+        if (!ask) {
+            io.stdout('Nothing written: not run in a terminal, so nobody could be asked. Run with -y to write.\n');
+            return 1;
+        }
+        const answer = (await ask('Write these? (y/N): ')).trim().toLowerCase();
         if (answer !== 'y' && answer !== 'yes') {
             io.stdout('Nothing written.\n');
             return 1;
         }
     }
-    const before = listFiles(outDir);
-    const written = {};
-    sources.forEach(source => {
-        const name = path__namespace.basename(source.file);
-        let generated;
-        try {
-            generated = generate(source.definition, name);
-        }
-        catch (e) {
-            io.stderr(name + ': ' + (e instanceof Error ? e.message : String(e)) + '\n');
-            failed = true;
-            return;
-        }
-        generated.warnings.forEach(warning => {
-            io.stderr(name + ': warning: ' + warning + '\n');
-        });
-        if (generated.issues.length) {
-            generated.issues.forEach(issue => {
-                io.stderr(name + ': unsupported: ' + (issue.symbol ? issue.symbol : '(content)') + (issue.slot !== null ? ' slot ' + issue.slot : '') + ': ' + issue.message + '\n');
-            });
-            if (!force) {
-                io.stderr(name + ': not written (' + generated.issues.length + ' unsupported feature(s); --force writes it anyway)\n');
-                failed = true;
-                return;
-            }
-        }
-        const images = [];
-        const missing = [];
-        const outside = [];
-        generated.data.images.forEach(entry => {
-            const local = localImagePath(entry.src);
-            if (local === null) {
-                return;
-            }
-            // Animate writes image paths relative to the published file, below its directory: a path
-            // that leads elsewhere (up out of it, or absolute) is neither read nor copied
-            if (!isBelow(publishedDir, local)) {
-                outside.push(entry.src);
-            }
-            else if (fs__namespace.existsSync(path__namespace.join(publishedDir, local))) {
-                images.push(local);
-            }
-            else {
-                missing.push(entry.src);
-            }
-        });
-        if (outside.length) {
-            io.stderr(name + ': not written: image paths that lead out of its directory: ' + outside.join(', ') + '\n');
-            failed = true;
-            return;
-        }
-        if (missing.length) {
-            io.stderr(name + ': not written: images it uses are missing: ' + missing.join(', ') + '\n');
-            failed = true;
-            return;
-        }
-        fs__namespace.mkdirSync(outDir, { recursive: true });
-        const target = path__namespace.join(outDir, name);
-        fs__namespace.writeFileSync(target, generated.source);
-        written[path__namespace.resolve(target)] = true;
-        images.forEach(image => {
-            const to = path__namespace.join(outDir, image);
-            if (!written[path__namespace.resolve(to)]) {
-                fs__namespace.mkdirSync(path__namespace.dirname(to), { recursive: true });
-                fs__namespace.copyFileSync(path__namespace.join(publishedDir, image), to);
-                written[path__namespace.resolve(to)] = true;
-            }
-        });
-        io.stdout(name + ' -> ' + relative(cwd, target) + '  (composition id ' + generated.id + (images.length ? ', ' + images.length + ' image(s)' : '') + ')\n');
-    });
-    const left = before.filter(file => !written[path__namespace.resolve(file)]);
-    if (left.length) {
+    const result = writeGeneration(plan);
+    io.stdout('Written: ' + result.written.length + ' file(s).\n');
+    if (result.left.length) {
         io.stdout('Not written by this run (remove them if no longer needed):\n');
-        left.forEach(file => {
-            io.stdout('  ' + relative(cwd, file) + '\n');
+        result.left.forEach(file => {
+            io.stdout('  ' + relativePath(cwd, file) + '\n');
         });
     }
     return failed ? 1 : 0;
@@ -908,5 +1034,7 @@ async function runCli(args, io) {
 exports.compositionId = compositionId;
 exports.generate = generate;
 exports.generateFromPublishedFile = generateFromPublishedFile;
+exports.planGeneration = planGeneration;
 exports.runCli = runCli;
+exports.writeGeneration = writeGeneration;
 //# sourceMappingURL=generator.cjs.js.map

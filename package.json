@@ -31,7 +31,8 @@
     "rollup": "rollup -c --bundleConfigAsCjs",
     "d": "tsc -p tsconfig.player.json --emitDeclarationOnly --declaration --outDir ./types/player && tsc -p tsconfig.generator.json --emitDeclarationOnly --declaration --outDir ./types/generator",
     "build": "npm run rollup -- --environment PROD && npm run d && echo done.",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "prepublishOnly": "node scripts/check-publish.js"
   },
   "keywords": [
     "pixi.js",

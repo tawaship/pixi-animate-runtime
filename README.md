@@ -55,7 +55,7 @@ my-project/
 3. **Convert.** From the project's root:
 
    ```
-   npx pixi-animate-runtime animate --out-dir public/animates
+   npx --no-install @tawaship/pixi-animate-runtime animate --out-dir public/animates
    ```
 
    It lists what it will write and asks; answer `y`. This writes `public/animates/game.js` (the runtime
@@ -110,8 +110,14 @@ published into (the one with the published `.js` files; `.fla` files and an `ima
 optional):
 
 ```
-npx pixi-animate-runtime assets/animates
+npx --no-install @tawaship/pixi-animate-runtime assets/animates
 ```
+
+`--no-install` runs only the copy installed in your project: without it, `npx` would download and run a package from the npm registry when the command is not installed. In the `scripts` of your `package.json`, the command name alone is enough (`"animate": "pixi-animate-runtime animate -o public/animates"`): npm runs scripts with the commands installed in the project and downloads nothing.
+
+To keep `npx` from downloading anything in your project at all (also when `--no-install` is forgotten), put
+`yes=false` in the project's `.npmrc`. `npx` then stops with an error when a command is not installed, instead
+of asking or, where nobody can answer (CI, scripts), downloading it without asking.
 
 This writes, into `assets/animates/generated/`, one runtime content file for every published JavaScript file
 in the directory, under the same name (`game.js` to `generated/game.js`), and copies the images each content

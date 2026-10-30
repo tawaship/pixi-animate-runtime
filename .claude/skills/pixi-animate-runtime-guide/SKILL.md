@@ -49,7 +49,7 @@ Consequences to keep in mind:
 ### 1. Generate the runtime content (development time)
 
 ```sh
-npx pixi-animate-runtime assets/animates
+npx --no-install @tawaship/pixi-animate-runtime assets/animates
 ```
 
 Give it the directory Animate published into. It writes `assets/animates/generated/<same name>.js` for every published `.js`, and copies the images each content uses next to it (`generated/images/...`). Copy the `generated/` directory into the application's assets.
@@ -57,6 +57,7 @@ Give it the directory Animate published into. It writes `assets/animates/generat
 - `-o, --out-dir <dir>` writes there instead of `generated/`. `-r, --recursive` also converts the published files in the directories below (not `node_modules` or hidden ones), written below `-o` at the same relative paths, or next to each published file in `generated/`. `-h, --help` shows the usage. A published `.js` file instead of a directory converts only that file
 - It first lists what it would write (published file → output file, composition id, images, files it replaces). It writes only after the user answers `y`. `-y, --yes` asks nothing and writes; run from a script, an npm script in CI or anything that is not a terminal, **`-y` is needed** (without it, nothing is written and the command exits with `1`)
 - Nothing is deleted. Leftover files in the output directory are only listed
+- Always write the command as `npx --no-install @tawaship/pixi-animate-runtime` (in npm scripts, `pixi-animate-runtime` alone). A bare `npx pixi-animate-runtime` in a project where the package is not installed downloads and runs an unscoped package of that name from the npm registry, without asking in CI or scripts. `yes=false` in the project's `.npmrc` keeps `npx` from downloading anything
 - From a Node script, `planGeneration(options)` (the same options as the command: `input`, `outDir`, `recursive`, `force`) makes everything and writes nothing, and `writeGeneration(plan)` writes it, so the script can show its own list or questions in between (or remove contents from the plan to write only some)
 - A content using unsupported features (each one listed) is not written, and the command exits with `1`. Report the listed features to the user; do not reach for `--force`
 - On Windows, `tools/pixi-animate-runtime.bat` in the installed package does the same (copy it into the project, drop the published directory on it)

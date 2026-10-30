@@ -51,7 +51,7 @@ player with a bundler).</p>
 </li>
 <li>
 <p><strong>Convert.</strong> From the project's root:</p>
-<pre><code><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-0">pixi</span><span class="hl-1">-</span><span class="hl-0">animate</span><span class="hl-1">-</span><span class="hl-0">runtime</span><span class="hl-1"> </span><span class="hl-0">animate</span><span class="hl-1"> --</span><span class="hl-0">out</span><span class="hl-1">-</span><span class="hl-0">dir</span><span class="hl-1"> </span><span class="hl-0">public</span><span class="hl-1">/</span><span class="hl-0">animates</span>
+<pre><code><span class="hl-0">npx</span><span class="hl-1"> --</span><span class="hl-0">no</span><span class="hl-1">-</span><span class="hl-0">install</span><span class="hl-1"> @</span><span class="hl-0">tawaship</span><span class="hl-1">/</span><span class="hl-0">pixi</span><span class="hl-1">-</span><span class="hl-0">animate</span><span class="hl-1">-</span><span class="hl-0">runtime</span><span class="hl-1"> </span><span class="hl-0">animate</span><span class="hl-1"> --</span><span class="hl-0">out</span><span class="hl-1">-</span><span class="hl-0">dir</span><span class="hl-1"> </span><span class="hl-0">public</span><span class="hl-1">/</span><span class="hl-0">animates</span>
 </code><button>Copy</button></pre>
 
 <p>It lists what it will write and asks; answer <code>y</code>. This writes <code>public/animates/game.js</code> (the runtime
@@ -89,9 +89,13 @@ JavaScript, which depends on the version of Animate; content published by other 
 <p>Turn the published content into runtime content with the command line tool, giving it the directory Animate
 published into (the one with the published <code>.js</code> files; <code>.fla</code> files and an <code>images/</code> directory there are
 optional):</p>
-<pre><code><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-0">pixi</span><span class="hl-1">-</span><span class="hl-0">animate</span><span class="hl-1">-</span><span class="hl-0">runtime</span><span class="hl-1"> </span><span class="hl-0">assets</span><span class="hl-1">/</span><span class="hl-0">animates</span>
+<pre><code><span class="hl-0">npx</span><span class="hl-1"> --</span><span class="hl-0">no</span><span class="hl-1">-</span><span class="hl-0">install</span><span class="hl-1"> @</span><span class="hl-0">tawaship</span><span class="hl-1">/</span><span class="hl-0">pixi</span><span class="hl-1">-</span><span class="hl-0">animate</span><span class="hl-1">-</span><span class="hl-0">runtime</span><span class="hl-1"> </span><span class="hl-0">assets</span><span class="hl-1">/</span><span class="hl-0">animates</span>
 </code><button>Copy</button></pre>
 
+<p><code>--no-install</code> runs only the copy installed in your project: without it, <code>npx</code> would download and run a package from the npm registry when the command is not installed. In the <code>scripts</code> of your <code>package.json</code>, the command name alone is enough (<code>&quot;animate&quot;: &quot;pixi-animate-runtime animate -o public/animates&quot;</code>): npm runs scripts with the commands installed in the project and downloads nothing.</p>
+<p>To keep <code>npx</code> from downloading anything in your project at all (also when <code>--no-install</code> is forgotten), put
+<code>yes=false</code> in the project's <code>.npmrc</code>. <code>npx</code> then stops with an error when a command is not installed, instead
+of asking or, where nobody can answer (CI, scripts), downloading it without asking.</p>
 <p>This writes, into <code>assets/animates/generated/</code>, one runtime content file for every published JavaScript file
 in the directory, under the same name (<code>game.js</code> to <code>generated/game.js</code>), and copies the images each content
 uses next to it at the same relative paths (<code>generated/images/...</code>). Images left over from earlier publishes

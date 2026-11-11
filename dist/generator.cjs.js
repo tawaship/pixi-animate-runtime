@@ -1,5 +1,5 @@
 /*!
- * @tawaship/pixi-animate-runtime - v0.1.0
+ * @tawaship/pixi-animate-runtime - v0.1.1
  * 
  * @author tawaship (makazu.mori@gmail.com)
  * @license MIT
@@ -190,7 +190,7 @@ function checkVersion(version, range, known) {
 }
 
 /** The version of this package (written in from package.json when the package is built) */
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 /**
  * The animate-data-converter versions this generator reads definitions of:

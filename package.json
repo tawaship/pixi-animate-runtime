@@ -1,6 +1,6 @@
 {
   "name": "@tawaship/pixi-animate-runtime",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Plays Adobe Animate HTML5 Canvas content on PixiJS from definitions extracted by @tawaship/animate-data-converter.",
   "main": "dist/pixi-animate-runtime.cjs.js",
   "module": "dist/pixi-animate-runtime.esm.js",

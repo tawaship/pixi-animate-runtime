@@ -441,6 +441,13 @@ Known faults are put into the player on purpose to confirm that the comparisons 
 
 ## Change log
 
+### 0.1.1
+
+- Right after a goto made outside the playing (from a pointer event, for example), PixiJS drew synched and single
+  frame clips at their old frame, and clips coming back on the display list at the frame they had when they left,
+  until the content played its next frame (up to a frame of the content: about 0.1 s at 10 fps). They now show
+  what CreateJS shows from the first draw after the goto
+
 ### 0.1.0
 
 - First release: generates runtime content from content published by Adobe Animate for HTML5 Canvas (the command

@@ -1,5 +1,5 @@
-<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Sprite | @tawaship/pixi-animate-runtime - v0.1.0</title><meta name="description" content="Documentation for @tawaship/pixi-animate-runtime"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script><script async src="../assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar">
-<div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@tawaship/pixi-animate-runtime - v0.1.0</a>
+<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Sprite | @tawaship/pixi-animate-runtime - v0.1.1</title><meta name="description" content="Documentation for @tawaship/pixi-animate-runtime"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script><script async src="../assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar">
+<div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@tawaship/pixi-animate-runtime - v0.1.1</a>
 <div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/>
 <ul role="listbox" id="tsd-search-results"></ul>
 <div id="tsd-search-status" aria-live="polite" aria-atomic="true">
@@ -14,7 +14,7 @@
 <section class="tsd-panel tsd-comment">
 <div class="tsd-comment tsd-typography"><p>createjs-compatible Sprite (frame by frame from a sprite sheet).</p>
 </div></section>
-<section class="tsd-panel tsd-hierarchy" data-refl="1797">
+<section class="tsd-panel tsd-hierarchy" data-refl="1801">
 <h4>Hierarchy (<a href="../hierarchy.html#player.Sprite">View Summary</a>)</h4>
 <ul class="tsd-hierarchy">
 <li class="tsd-hierarchy-item"><a href="player.DisplayObject.html" class="tsd-signature-type tsd-kind-class">DisplayObject</a>
@@ -38,6 +38,7 @@
 <a href="#_listeners" class="tsd-index-link tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>listeners</span></a>
 <a href="#_maskhost" class="tsd-index-link tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>mask<wbr/>Host</span></a>
 <a href="#_masktargets" class="tsd-index-link tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>mask<wbr/>Targets</span></a>
+<a href="#_pendingresolve" class="tsd-index-link tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>pending<wbr/>Resolve</span></a>
 <a href="#bitmapcache" class="tsd-index-link tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>bitmap<wbr/>Cache</span></a>
 <a href="#currentframe" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>current<wbr/>Frame</span></a>
 <a href="#cursor" class="tsd-index-link tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>cursor</span></a>
@@ -169,6 +170,16 @@
 <ul>
 <li>Defined in packages/pixi-animate-runtime/src/player/display.ts:88</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
+<h3 class="tsd-anchor-link" id="_pendingresolve"><span>_<wbr/>pending<wbr/>Resolve</span><a href="#_pendingresolve" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">_pendingResolve</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div>
+<div class="tsd-comment tsd-typography"><p>Set on a root when a timeline under it jumped outside the playing (a goto):
+its clips are to be settled before Pixi draws it (settleForDrawing), as a
+createjs draw would. The resolve phase of a frame clears it</p>
+</div><aside class="tsd-sources">
+<p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#_pendingresolve">_pendingResolve</a></p>
+<ul>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:94</li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="bitmapcache"><span>bitmap<wbr/>Cache</span><a href="#bitmapcache" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">bitmapCache</span><span class="tsd-signature-symbol">:</span> <a href="../interfaces/player.ICacheState.html" class="tsd-signature-type tsd-kind-interface">ICacheState</a> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> = null</span></div>
 <div class="tsd-comment tsd-typography"><p>The cache createjs would draw through (filters show in Pixi without one)</p>
@@ -285,7 +296,7 @@
 <h4 class="tsd-returns-title">Returns <a href="player.EventDispatcher.html" class="tsd-signature-type tsd-kind-class">EventDispatcher</a> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject._eventParent</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:98</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:104</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="_off"><span>_<wbr/>off</span><a href="#_off" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -295,7 +306,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">undefined</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject._off</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:142</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:148</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="_off_off-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">_off</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -306,7 +317,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject._off</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:143</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:149</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="alpha"><span>alpha</span><a href="#alpha" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -316,7 +327,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.alpha</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:132</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:138</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="alphaalpha-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">alpha</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -327,7 +338,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.alpha</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:133</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:139</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="compositeoperation"><span>composite<wbr/>Operation</span><a href="#compositeoperation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -337,7 +348,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.compositeOperation</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:147</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:153</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="compositeoperationcompositeoperation-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">compositeOperation</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -348,7 +359,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.compositeOperation</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:148</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:154</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="filters"><span>filters</span><a href="#filters" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -358,7 +369,7 @@
 <h4 class="tsd-returns-title">Returns <a href="../interfaces/player.IFilterLike.html" class="tsd-signature-type tsd-kind-interface">IFilterLike</a><span class="tsd-signature-symbol">[]</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.filters</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:198</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:204</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="filtersfilters-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">filters</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <a href="../interfaces/player.IFilterLike.html" class="tsd-signature-type tsd-kind-interface">IFilterLike</a><span class="tsd-signature-symbol">[]</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -369,7 +380,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.filters</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:199</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:205</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="mask"><span>mask</span><a href="#mask" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -379,7 +390,7 @@
 <h4 class="tsd-returns-title">Returns <a href="player.DisplayObject.html" class="tsd-signature-type tsd-kind-class">DisplayObject</a> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.mask</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:182</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:188</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="maskmask-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">mask</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <a href="player.DisplayObject.html" class="tsd-signature-type tsd-kind-class">DisplayObject</a> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -390,7 +401,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.mask</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:183</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:189</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="name"><span>name</span><a href="#name" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -400,7 +411,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.name</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:136</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:142</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="namename-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">name</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -411,7 +422,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.name</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:137</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:143</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="regx"><span>reg<wbr/>X</span><a href="#regx" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -421,7 +432,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.regX</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:122</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:128</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="regxregx-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">regX</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -432,7 +443,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.regX</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:123</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:129</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="regy"><span>reg<wbr/>Y</span><a href="#regy" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -442,7 +453,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.regY</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:124</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:130</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="regyregy-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">regY</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -453,7 +464,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.regY</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:125</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:131</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="rotation"><span>rotation</span><a href="#rotation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -463,7 +474,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.rotation</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:126</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:132</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="rotationrotation-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">rotation</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -474,7 +485,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.rotation</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:127</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:133</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="scalex"><span>scale<wbr/>X</span><a href="#scalex" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -484,7 +495,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.scaleX</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:118</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:124</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="scalexscalex-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">scaleX</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -495,7 +506,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.scaleX</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:119</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:125</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="scaley"><span>scale<wbr/>Y</span><a href="#scaley" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -505,7 +516,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.scaleY</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:120</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:126</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="scaleyscaley-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">scaleY</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -516,7 +527,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.scaleY</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:121</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:127</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="skewx"><span>skew<wbr/>X</span><a href="#skewx" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -526,7 +537,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.skewX</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:128</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:134</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="skewxskewx-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">skewX</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -537,7 +548,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.skewX</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:129</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:135</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="skewy"><span>skew<wbr/>Y</span><a href="#skewy" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -547,7 +558,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.skewY</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:130</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:136</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="skewyskewy-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">skewY</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -558,7 +569,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.skewY</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:131</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:137</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="visible"><span>visible</span><a href="#visible" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -568,7 +579,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.visible</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:134</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:140</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="visiblevisible-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">visible</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -579,7 +590,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.visible</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:135</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:141</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="x"><span>x</span><a href="#x" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -589,7 +600,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.x</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:114</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:120</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="xx-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">x</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -600,7 +611,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.x</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:115</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:121</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="y"><span>y</span><a href="#y" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -610,7 +621,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.y</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:116</li></ul></aside></div></li>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:122</li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="yy-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">y</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -621,7 +632,7 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from DisplayObject.y</p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:117</li></ul></aside></div></li></ul></section></section></details>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:123</li></ul></aside></div></li></ul></section></section></details>
 <details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
 <h2 class="tsd-anchor-link" id="methods-1">Methods<a href="#methods-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2></summary>
 <section>
@@ -638,7 +649,7 @@ and handed down to the children</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#_applycomposite">_applyComposite</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:176</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:182</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="_clipsasmask"><span>_<wbr/>clips<wbr/>As<wbr/>Mask</span><a href="#_clipsasmask" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -650,7 +661,7 @@ and handed down to the children</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#_clipsasmask">_clipsAsMask</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:231</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:237</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="_dispatchevent"><span>_<wbr/>dispatch<wbr/>Event</span><a href="#_dispatchevent" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -683,7 +694,7 @@ children under it, each child saving and restoring the context)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#_effectivecomposite">_effectiveComposite</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:158</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:164</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="_goto"><span>_<wbr/>goto</span><a href="#_goto" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -708,7 +719,7 @@ children under it, each child saving and restoring the context)</p>
 <h4 class="tsd-returns-title">Returns <a href="https://pixijs.download/v5.3.9/docs/index.html" class="tsd-signature-type external" target="_blank">Container</a> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#_piximasknode">_pixiMaskNode</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:236</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:242</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="_releasemasknode"><span>_<wbr/>release<wbr/>Mask<wbr/>Node</span><a href="#_releasemasknode" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -720,7 +731,7 @@ children under it, each child saving and restoring the context)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#_releasemasknode">_releaseMaskNode</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:241</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:247</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="_setblendmode"><span>_<wbr/>set<wbr/>Blend<wbr/>Mode</span><a href="#_setblendmode" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -752,7 +763,7 @@ children under it, each child saving and restoring the context)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#_setinheritedcomposite">_setInheritedComposite</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:163</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:169</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="_tick"><span>_<wbr/>tick</span><a href="#_tick" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -780,7 +791,7 @@ children under it, each child saving and restoring the context)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#_updatepiximask">_updatePixiMask</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:246</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:252</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="_updaterenderable"><span>_<wbr/>update<wbr/>Renderable</span><a href="#_updaterenderable" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -794,7 +805,7 @@ any display list and is not drawn itself)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#_updaterenderable">_updateRenderable</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:217</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:223</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="addeventlistener"><span>add<wbr/>Event<wbr/>Listener</span><a href="#addeventlistener" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -837,7 +848,7 @@ any display list and is not drawn itself)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#cache">cache</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:281</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:287</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="dispatchevent"><span>dispatch<wbr/>Event</span><a href="#dispatchevent" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -863,7 +874,7 @@ any display list and is not drawn itself)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#getchilddepth">getChildDepth</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:297</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:303</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="gotoandplay"><span>goto<wbr/>And<wbr/>Play</span><a href="#gotoandplay" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -913,7 +924,7 @@ any display list and is not drawn itself)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#isvisible">isVisible</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:277</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:283</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="off"><span>off</span><a href="#off" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -1001,7 +1012,7 @@ any display list and is not drawn itself)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">this</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#set">set</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:270</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:276</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="setbounds"><span>set<wbr/>Bounds</span><a href="#setbounds" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -1018,7 +1029,7 @@ any display list and is not drawn itself)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#setbounds">setBounds</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:293</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:299</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="settransform"><span>set<wbr/>Transform</span><a href="#settransform" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -1040,7 +1051,7 @@ any display list and is not drawn itself)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">this</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#settransform">setTransform</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:257</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:263</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="stop"><span>stop</span><a href="#stop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -1071,7 +1082,7 @@ any display list and is not drawn itself)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#uncache">uncache</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:289</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:295</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="updatecache"><span>update<wbr/>Cache</span><a href="#updatecache" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -1081,7 +1092,7 @@ any display list and is not drawn itself)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <p>Inherited from <a href="player.DisplayObject.html">DisplayObject</a>.<a href="player.DisplayObject.html#updatecache">updateCache</a></p>
 <ul>
-<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:285</li></ul></aside></div></li></ul></section>
+<li>Defined in packages/pixi-animate-runtime/src/player/display.ts:291</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="willtrigger"><span>will<wbr/>Trigger</span><a href="#willtrigger" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited">
@@ -1114,13 +1125,13 @@ any display list and is not drawn itself)</p>
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Constructors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Constructors</summary>
 <div><a href="#constructor"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Constructor"><use href="../assets/icons.svg#icon-512"></use></svg><span>constructor</span></a></div></details>
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Properties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Properties</summary>
-<div><a href="#_bounds" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>bounds</span></a><a href="#_capturelisteners" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>capture<wbr/>Listeners</span></a><a href="#_listeners" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>listeners</span></a><a href="#_maskhost" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>mask<wbr/>Host</span></a><a href="#_masktargets" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>mask<wbr/>Targets</span></a><a href="#bitmapcache" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>bitmap<wbr/>Cache</span></a><a href="#currentframe"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>current<wbr/>Frame</span></a><a href="#cursor" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>cursor</span></a><a href="#framebounds" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>frame<wbr/>Bounds</span></a><a href="#framerate"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>framerate</span></a><a href="#hitarea" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>hit<wbr/>Area</span></a><a href="#id" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>id</span></a><a href="#mouseenabled" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>mouse<wbr/>Enabled</span></a><a href="#nominalbounds" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>nominal<wbr/>Bounds</span></a><a href="#parent" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>parent</span></a><a href="#paused"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>paused</span></a><a href="#pixi" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>pixi</span></a><a href="#pixisprite"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>pixi<wbr/>Sprite</span></a><a href="#shadow" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>shadow</span></a><a href="#snaptopixel" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>snap<wbr/>To<wbr/>Pixel</span></a><a href="#spritesheet"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>sprite<wbr/>Sheet</span></a><a href="#tickenabled" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>tick<wbr/>Enabled</span></a></div></details>
+<div><a href="#_bounds" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>bounds</span></a><a href="#_capturelisteners" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>capture<wbr/>Listeners</span></a><a href="#_listeners" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>listeners</span></a><a href="#_maskhost" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>mask<wbr/>Host</span></a><a href="#_masktargets" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>mask<wbr/>Targets</span></a><a href="#_pendingresolve" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>_<wbr/>pending<wbr/>Resolve</span></a><a href="#bitmapcache" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>bitmap<wbr/>Cache</span></a><a href="#currentframe"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>current<wbr/>Frame</span></a><a href="#cursor" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>cursor</span></a><a href="#framebounds" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>frame<wbr/>Bounds</span></a><a href="#framerate"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>framerate</span></a><a href="#hitarea" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>hit<wbr/>Area</span></a><a href="#id" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>id</span></a><a href="#mouseenabled" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>mouse<wbr/>Enabled</span></a><a href="#nominalbounds" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>nominal<wbr/>Bounds</span></a><a href="#parent" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>parent</span></a><a href="#paused"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>paused</span></a><a href="#pixi" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>pixi</span></a><a href="#pixisprite"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>pixi<wbr/>Sprite</span></a><a href="#shadow" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>shadow</span></a><a href="#snaptopixel" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>snap<wbr/>To<wbr/>Pixel</span></a><a href="#spritesheet"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>sprite<wbr/>Sheet</span></a><a href="#tickenabled" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>tick<wbr/>Enabled</span></a></div></details>
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Accessors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Accessors</summary>
 <div><a href="#_eventparent" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>_<wbr/>event<wbr/>Parent</span></a><a href="#_off" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>_<wbr/>off</span></a><a href="#alpha" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>alpha</span></a><a href="#compositeoperation" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>composite<wbr/>Operation</span></a><a href="#filters" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>filters</span></a><a href="#mask" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>mask</span></a><a href="#name" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>name</span></a><a href="#regx" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>reg<wbr/>X</span></a><a href="#regy" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>reg<wbr/>Y</span></a><a href="#rotation" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>rotation</span></a><a href="#scalex" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>scale<wbr/>X</span></a><a href="#scaley" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>scale<wbr/>Y</span></a><a href="#skewx" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>skew<wbr/>X</span></a><a href="#skewy" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>skew<wbr/>Y</span></a><a href="#visible" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>visible</span></a><a href="#x" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>x</span></a><a href="#y" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Accessor"><use href="../assets/icons.svg#icon-262144"></use></svg><span>y</span></a></div></details>
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Methods</summary>
 <div><a href="#_applycomposite" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>apply<wbr/>Composite</span></a><a href="#_clipsasmask" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>clips<wbr/>As<wbr/>Mask</span></a><a href="#_dispatchevent" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>dispatch<wbr/>Event</span></a><a href="#_effectivecomposite" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>effective<wbr/>Composite</span></a><a href="#_goto"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>goto</span></a><a href="#_piximasknode" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>pixi<wbr/>Mask<wbr/>Node</span></a><a href="#_releasemasknode" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>release<wbr/>Mask<wbr/>Node</span></a><a href="#_setblendmode"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>set<wbr/>Blend<wbr/>Mode</span></a><a href="#_setinheritedcomposite" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>set<wbr/>Inherited<wbr/>Composite</span></a><a href="#_tick"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>tick</span></a><a href="#_updatepiximask" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>update<wbr/>Pixi<wbr/>Mask</span></a><a href="#_updaterenderable" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>_<wbr/>update<wbr/>Renderable</span></a><a href="#addeventlistener" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>add<wbr/>Event<wbr/>Listener</span></a><a href="#advance"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>advance</span></a><a href="#cache" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>cache</span></a><a href="#dispatchevent" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>dispatch<wbr/>Event</span></a><a href="#getchilddepth" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>get<wbr/>Child<wbr/>Depth</span></a><a href="#gotoandplay"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>goto<wbr/>And<wbr/>Play</span></a><a href="#gotoandstop"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>goto<wbr/>And<wbr/>Stop</span></a><a href="#haseventlistener" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>has<wbr/>Event<wbr/>Listener</span></a><a href="#isvisible" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>is<wbr/>Visible</span></a><a href="#off" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>off</span></a><a href="#on" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>on</span></a><a href="#play"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>play</span></a><a href="#removealleventlisteners" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>remove<wbr/>All<wbr/>Event<wbr/>Listeners</span></a><a href="#removeeventlistener" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>remove<wbr/>Event<wbr/>Listener</span></a><a href="#set" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set</span></a><a href="#setbounds" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>Bounds</span></a><a href="#settransform" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>Transform</span></a><a href="#stop"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>stop</span></a><a href="#tostring"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>to<wbr/>String</span></a><a href="#uncache" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>uncache</span></a><a href="#updatecache" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>update<wbr/>Cache</span></a><a href="#willtrigger" class="tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>will<wbr/>Trigger</span></a></div></details></div></details></div>
 <div class="site-menu">
-<nav class="tsd-navigation"><a href="../modules.html">@tawaship/pixi-animate-runtime - v0.1.0</a>
+<nav class="tsd-navigation"><a href="../modules.html">@tawaship/pixi-animate-runtime - v0.1.1</a>
 <ul class="tsd-small-nested-navigation" id="tsd-nav-container">
 <li>Loading...</li></ul></nav></div></div></div><footer>
 <p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer>

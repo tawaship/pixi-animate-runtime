@@ -1,5 +1,5 @@
-<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>@tawaship/pixi-animate-runtime - v0.1.0</title><meta name="description" content="Documentation for @tawaship/pixi-animate-runtime"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script><script async src="assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar">
-<div class="tsd-toolbar-contents container"><a href="index.html" class="title">@tawaship/pixi-animate-runtime - v0.1.0</a>
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>@tawaship/pixi-animate-runtime - v0.1.1</title><meta name="description" content="Documentation for @tawaship/pixi-animate-runtime"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script><script async src="assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar">
+<div class="tsd-toolbar-contents container"><a href="index.html" class="title">@tawaship/pixi-animate-runtime - v0.1.1</a>
 <div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/>
 <ul role="listbox" id="tsd-search-results"></ul>
 <div id="tsd-search-status" aria-live="polite" aria-atomic="true">
@@ -7,7 +7,7 @@
 <div class="container container-main">
 <div class="col-content">
 <div class="tsd-page-title">
-<h1>@tawaship/pixi-animate-runtime - v0.1.0</h1></div>
+<h1>@tawaship/pixi-animate-runtime - v0.1.1</h1></div>
 <div class="tsd-panel tsd-typography"><h1 id="tawashippixi-animate-runtime" class="tsd-anchor-link">@tawaship/pixi-animate-runtime<a href="#tawashippixi-animate-runtime" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
 <p>Plays content made in Adobe Animate (published for HTML5 Canvas) on PixiJS, without CreateJS.</p>
 <ul>
@@ -440,6 +440,13 @@ What is drawn is compared too: every test content is drawn by CreateJS and by th
 headless browser, frame by frame, and the pixels are compared, with differences in antialiasing allowed for.
 Known faults are put into the player on purpose to confirm that the comparisons notice them.</p>
 <h2 id="change-log" class="tsd-anchor-link">Change log<a href="#change-log" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="011" class="tsd-anchor-link">0.1.1<a href="#011" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li>Right after a goto made outside the playing (from a pointer event, for example), PixiJS drew synched and single
+frame clips at their old frame, and clips coming back on the display list at the frame they had when they left,
+until the content played its next frame (up to a frame of the content: about 0.1 s at 10 fps). They now show
+what CreateJS shows from the first draw after the goto</li>
+</ul>
 <h3 id="010" class="tsd-anchor-link">0.1.0<a href="#010" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul>
 <li>First release: generates runtime content from content published by Adobe Animate for HTML5 Canvas (the command
@@ -486,10 +493,11 @@ line tool and the API), and plays it on PixiJS 5.3 without CreateJS (<code>loadC
 <li><a href="#change-log"><span>Change log</span></a></li>
 <li>
 <ul>
+<li><a href="#011"><span>0.1.1</span></a></li>
 <li><a href="#010"><span>0.1.0</span></a></li></ul></li>
 <li><a href="#license"><span>License</span></a></li></ul></div></details></div>
 <div class="site-menu">
-<nav class="tsd-navigation"><a href="modules.html">@tawaship/pixi-animate-runtime - v0.1.0</a>
+<nav class="tsd-navigation"><a href="modules.html">@tawaship/pixi-animate-runtime - v0.1.1</a>
 <ul class="tsd-small-nested-navigation" id="tsd-nav-container">
 <li>Loading...</li></ul></nav></div></div></div><footer>
 <p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer>

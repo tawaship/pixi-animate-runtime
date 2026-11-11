@@ -3410,7 +3410,7 @@ var PULL = 0.05;
  * on only settles it on its first frame.
  */
 var AnimateController = function AnimateController(container) {
-    /** Playback speed (1 is the content's own frame rate) */
+    /** Playback speed (1 is the content's own frame rate, 0 stops; a value below 0 is taken as 0) */
     this.speed = 1;
     /** Whether one call may play more than one frame (when the display runs slower than the content) */
     this.overSpeed = true;
@@ -3445,8 +3445,11 @@ AnimateController.prototype._settleForDrawing = function _settleForDrawing () {
 AnimateController.prototype.handleTick = function handleTick (delta) {
         var this$1$1 = this;
 
-    var d = delta * this.speed;
-    var usual = this._usualDelta(delta) * this.speed;
+    // A speed below 0 plays as 0 does (nothing is played backward): the frames owed stay where they
+    // were, and the playing goes on from there once the speed is above 0 again
+    var speed = Math.max(this.speed, 0);
+    var d = delta * speed;
+    var usual = this._usualDelta(delta) * speed;
     var targets = this._targets;
     Object.keys(targets).forEach(function (key) {
         var target = targets[Number(key)];
@@ -3552,7 +3555,7 @@ var AnimateContainer = /*@__PURE__*/(function (superclass) {
     AnimateContainer.prototype.constructor = AnimateContainer;
 
     var prototypeAccessors = { speed: { configurable: true },overSpeed: { configurable: true },smooth: { configurable: true } };
-    /** Playback speed (1 is the content's own frame rate) */
+    /** Playback speed (1 is the content's own frame rate, 0 stops; a value below 0 is taken as 0) */
     prototypeAccessors.speed.get = function () { return this._controller.speed; };
     prototypeAccessors.speed.set = function (value) { this._controller.speed = value; };
     /** Whether one call may play more than one frame (when the display runs slower than the content) */

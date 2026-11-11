@@ -102,7 +102,7 @@ loadContentAsync({ id: 'COMPOSITION_ID', basepath: 'assets/animates/generated/' 
 
 - `addCreatejs(instance)` / `addCreatejsAt(instance, index)` put an instance on the container; a movie clip plays from its first frame. `removeCreatejs(instance)` takes it off and it stops
 - Content plays at its published frame rate whatever the display's refresh rate
-- `speed`: playback speed (`1` = published frame rate, `0` stops)
+- `speed`: playback speed (`1` = published frame rate, `0` stops; a value below `0` is taken as `0`, nothing plays backward)
 - `overSpeed` (default `true`): when the display runs slower than the content, one tick may play several frames. `false` plays at most one frame per tick
 - `smooth` (default `true`): frames follow a steady clock, so small variations of the frame time do not make the playing uneven (no frame on one tick, two on the next); it still keeps to the real time. Leave it on unless the user asks for the pixi-animate-container behavior (`false`)
 - To play on a container of another PixiJS framework, use `new AnimateController(container)`; it has the same `addCreatejs`, `handleTick`, `speed`, `overSpeed`, `smooth`

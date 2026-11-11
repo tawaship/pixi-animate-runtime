@@ -37,7 +37,7 @@ interface ITarget {
  * on only settles it on its first frame.
  */
 export class AnimateController {
-	/** Playback speed (1 is the content's own frame rate) */
+	/** Playback speed (1 is the content's own frame rate, 0 stops; a value below 0 is taken as 0) */
 	speed = 1;
 	/** Whether one call may play more than one frame (when the display runs slower than the content) */
 	overSpeed = true;
@@ -76,8 +76,11 @@ export class AnimateController {
 	}
 
 	handleTick(delta: number): void {
-		const d = delta * this.speed;
-		const usual = this._usualDelta(delta) * this.speed;
+		// A speed below 0 plays as 0 does (nothing is played backward): the frames owed stay where they
+		// were, and the playing goes on from there once the speed is above 0 again
+		const speed = Math.max(this.speed, 0);
+		const d = delta * speed;
+		const usual = this._usualDelta(delta) * speed;
 		const targets = this._targets;
 
 		Object.keys(targets).forEach(key => {
@@ -183,7 +186,7 @@ export class AnimateController {
 export class AnimateContainer extends PIXI.Container {
 	private readonly _controller: AnimateController = new AnimateController(this);
 
-	/** Playback speed (1 is the content's own frame rate) */
+	/** Playback speed (1 is the content's own frame rate, 0 stops; a value below 0 is taken as 0) */
 	get speed(): number { return this._controller.speed; }
 	set speed(value: number) { this._controller.speed = value; }
 

@@ -18,7 +18,7 @@ import { DisplayObject } from './display';
  * on only settles it on its first frame.
  */
 export declare class AnimateController {
-    /** Playback speed (1 is the content's own frame rate) */
+    /** Playback speed (1 is the content's own frame rate, 0 stops; a value below 0 is taken as 0) */
     speed: number;
     /** Whether one call may play more than one frame (when the display runs slower than the content) */
     overSpeed: boolean;
@@ -56,7 +56,7 @@ export declare class AnimateController {
  */
 export declare class AnimateContainer extends PIXI.Container {
     private readonly _controller;
-    /** Playback speed (1 is the content's own frame rate) */
+    /** Playback speed (1 is the content's own frame rate, 0 stops; a value below 0 is taken as 0) */
     get speed(): number;
     set speed(value: number);
     /** Whether one call may play more than one frame (when the display runs slower than the content) */

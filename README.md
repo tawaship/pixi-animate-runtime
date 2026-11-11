@@ -280,7 +280,8 @@ content's frames.
   `lib.properties` (`width`, `height`, `fps`, `color` and so on; read-only)
 - To use an image of the content elsewhere, create the symbol that shows it and take its Pixi node:
   `content.create('Bitmap1').pixi.texture`
-- `container.speed` changes the playback speed (`1` is the published frame rate, `0` stops). When the
+- `container.speed` changes the playback speed (`1` is the published frame rate, `0` stops; a value below `0`
+  stops it as `0` does, and it goes on from where it stopped once the speed is above `0` again). When the
   display runs slower than the content, one call plays several frames; set `container.overSpeed = false`
   to play at most one frame per call
 - `container.smooth` (`true` by default) keeps the playing even when the time between frames of the display
@@ -443,6 +444,8 @@ Known faults are put into the player on purpose to confirm that the comparisons 
 
 ### 0.1.1
 
+- A `speed` below `0` stops the playing as `0` does. It kept the playing stopped for a while after the speed was
+  set above `0` again (for as long as it had been below `0`)
 - Right after a goto made outside the playing (from a pointer event, for example), PixiJS drew synched and single
   frame clips at their old frame, and clips coming back on the display list at the frame they had when they left,
   until the content played its next frame (up to a frame of the content: about 0.1 s at 10 fps). They now show

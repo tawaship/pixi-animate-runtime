@@ -229,7 +229,8 @@ matters for color effects, which the player draws the same either way)</li>
 <code>lib.properties</code> (<code>width</code>, <code>height</code>, <code>fps</code>, <code>color</code> and so on; read-only)</li>
 <li>To use an image of the content elsewhere, create the symbol that shows it and take its Pixi node:
 <code>content.create('Bitmap1').pixi.texture</code></li>
-<li><code>container.speed</code> changes the playback speed (<code>1</code> is the published frame rate, <code>0</code> stops). When the
+<li><code>container.speed</code> changes the playback speed (<code>1</code> is the published frame rate, <code>0</code> stops; a value below <code>0</code>
+stops it as <code>0</code> does, and it goes on from where it stopped once the speed is above <code>0</code> again). When the
 display runs slower than the content, one call plays several frames; set <code>container.overSpeed = false</code>
 to play at most one frame per call</li>
 <li><code>container.smooth</code> (<code>true</code> by default) keeps the playing even when the time between frames of the display
@@ -442,6 +443,8 @@ Known faults are put into the player on purpose to confirm that the comparisons 
 <h2 id="change-log" class="tsd-anchor-link">Change log<a href="#change-log" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <h3 id="011" class="tsd-anchor-link">0.1.1<a href="#011" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul>
+<li>A <code>speed</code> below <code>0</code> stops the playing as <code>0</code> does. It kept the playing stopped for a while after the speed was
+set above <code>0</code> again (for as long as it had been below <code>0</code>)</li>
 <li>Right after a goto made outside the playing (from a pointer event, for example), PixiJS drew synched and single
 frame clips at their old frame, and clips coming back on the display list at the frame they had when they left,
 until the content played its next frame (up to a frame of the content: about 0.1 s at 10 fps). They now show

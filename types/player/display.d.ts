@@ -69,6 +69,12 @@ export declare class DisplayObject extends EventDispatcher {
     _maskHost: Container | null;
     /** The objects this object masks (while they are on a display list) */
     _maskTargets: DisplayObject[];
+    /**
+     * Set on a root when a timeline under it jumped outside the playing (a goto):
+     * its clips are to be settled before Pixi draws it (settleForDrawing), as a
+     * createjs draw would. The resolve phase of a frame clears it
+     */
+    _pendingResolve: boolean;
     constructor(pixi: IOwnedNode);
     get _eventParent(): EventDispatcher | null;
     private get _transform();

@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { DisplayObject } from './display';
 import { MovieClip } from './movieclip';
-import { tick, resolveState } from './content';
+import { tick, resolveState, settleForDrawing } from './content';
 
 /** The frame rate a root plays at when its content does not give one */
 const DEFAULT_FPS = 60;
@@ -53,6 +53,26 @@ export class AnimateController {
 	/** @param container The container the roots are put on */
 	constructor(container: PIXI.Container) {
 		this._container = container;
+		// Pixi updates the transforms of the tree before every draw: the roots a goto changed outside
+		// the playing are settled then, as a createjs draw settles them (frames played meanwhile settle them first)
+		const updateTransform = container.updateTransform;
+		const controller = this;
+		container.updateTransform = function (this: PIXI.Container): void {
+			controller._settleForDrawing();
+			updateTransform.call(this);
+		};
+	}
+
+	/** Settles the roots marked by a goto since they were last resolved */
+	private _settleForDrawing(): void {
+		const targets = this._targets;
+		Object.keys(targets).forEach(key => {
+			const target = targets[Number(key)];
+			if (target && target.root._pendingResolve) {
+				target.root._pendingResolve = false;
+				settleForDrawing(target.root);
+			}
+		});
 	}
 
 	handleTick(delta: number): void {

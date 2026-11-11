@@ -32,6 +32,8 @@ export declare class AnimateController {
     private _nextDelta;
     /** @param container The container the roots are put on */
     constructor(container: PIXI.Container);
+    /** Settles the roots marked by a goto since they were last resolved */
+    private _settleForDrawing;
     handleTick(delta: number): void;
     /** Records a delta and gives the median of the latest ones */
     private _usualDelta;

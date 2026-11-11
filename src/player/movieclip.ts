@@ -448,6 +448,13 @@ export class MovieClip extends Container {
 		if (position != null) {
 			this._t = 0;
 			this._updateTimeline(position, true);
+			// The clips it placed (synched ones, ones to start over) are settled by createjs when it
+			// draws: the root is to be settled before Pixi draws it, if no frame is played before
+			let root: DisplayObject = this;
+			while (root.parent) {
+				root = root.parent;
+			}
+			root._pendingResolve = true;
 		}
 	}
 

@@ -4,7 +4,7 @@ import { VERSION } from './version';
 import { DisplayObject, Container } from './display';
 import { Rectangle } from './geom';
 import { Event, EventDispatcher } from './events';
-import { MovieClip, Timeline, TweenState, ITweenScope, TScript, TWriter, TMemberWriter, TWrittenValue } from './movieclip';
+import { MovieClip, Timeline, TweenState, ITweenScope, TScript, TWriter, TMemberWriter, TWrittenValue, INDEPENDENT } from './movieclip';
 import {
 	Shape, Graphics, Sprite, SpriteSheet, Bitmap, Text, ColorFilter, ButtonHelper,
 	ITextureSource, IImageAsset
@@ -580,6 +580,7 @@ export function tick(root: DisplayObject, event?: Event): void {
  * reverse order), without playing a frame.
  */
 export function resolveState(node: DisplayObject): void {
+	node._pendingResolve = false;
 	if (node instanceof MovieClip) {
 		node._updateState();
 	}
@@ -588,6 +589,34 @@ export function resolveState(node: DisplayObject): void {
 		for (let i = children.length - 1; i >= 0; i--) {
 			if (children[i] instanceof MovieClip) {
 				resolveState(children[i]);
+			}
+		}
+	}
+}
+
+/**
+ * Settles a display tree for drawing without playing it on, as a createjs
+ * stage draw shows it (MovieClip.draw settles each clip): the synched and
+ * single frame clips are placed at the frame their parent gives, and a clip
+ * waiting to start over (an independent clip reset when its parent placed it
+ * again) is shown at its first frame the way a new clip is (no frame script,
+ * its playhead left to start on the next frame, as in the template, where
+ * createjs draws only after a frame). Children after their parent, in reverse
+ * order as the resolve phase.
+ */
+export function settleForDrawing(node: DisplayObject): void {
+	if (node instanceof MovieClip) {
+		if (node.mode !== INDEPENDENT) {
+			node._updateState();
+		} else if (node._rawPosition === -1) {
+			node._renderFirstFrame();
+		}
+	}
+	if (node instanceof Container) {
+		const children = node.children.slice();
+		for (let i = children.length - 1; i >= 0; i--) {
+			if (children[i] instanceof MovieClip) {
+				settleForDrawing(children[i]);
 			}
 		}
 	}

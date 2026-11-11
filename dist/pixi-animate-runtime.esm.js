@@ -425,6 +425,12 @@ var DisplayObject = /*@__PURE__*/(function (EventDispatcher) {
         this._maskHost = null;
         /** The objects this object masks (while they are on a display list) */
         this._maskTargets = [];
+        /**
+         * Set on a root when a timeline under it jumped outside the playing (a goto):
+         * its clips are to be settled before Pixi draws it (settleForDrawing), as a
+         * createjs draw would. The resolve phase of a frame clears it
+         */
+        this._pendingResolve = false;
         this.id = nextId++;
         this.pixi = pixi;
         pixi.owner = this;
@@ -1219,6 +1225,13 @@ var MovieClip = /*@__PURE__*/(function (Container) {
         if (position != null) {
             this._t = 0;
             this._updateTimeline(position, true);
+            // The clips it placed (synched ones, ones to start over) are settled by createjs when it
+            // draws: the root is to be settled before Pixi draws it, if no frame is played before
+            var root = this;
+            while (root.parent) {
+                root = root.parent;
+            }
+            root._pendingResolve = true;
         }
     };
     MovieClip.prototype._reset = function _reset () {
@@ -3310,6 +3323,7 @@ function tick(root, event) {
  * reverse order), without playing a frame.
  */
 function resolveState(node) {
+    node._pendingResolve = false;
     if (node instanceof MovieClip) {
         node._updateState();
     }
@@ -3318,6 +3332,34 @@ function resolveState(node) {
         for (var i = children.length - 1; i >= 0; i--) {
             if (children[i] instanceof MovieClip) {
                 resolveState(children[i]);
+            }
+        }
+    }
+}
+/**
+ * Settles a display tree for drawing without playing it on, as a createjs
+ * stage draw shows it (MovieClip.draw settles each clip): the synched and
+ * single frame clips are placed at the frame their parent gives, and a clip
+ * waiting to start over (an independent clip reset when its parent placed it
+ * again) is shown at its first frame the way a new clip is (no frame script,
+ * its playhead left to start on the next frame, as in the template, where
+ * createjs draws only after a frame). Children after their parent, in reverse
+ * order as the resolve phase.
+ */
+function settleForDrawing(node) {
+    if (node instanceof MovieClip) {
+        if (node.mode !== INDEPENDENT) {
+            node._updateState();
+        }
+        else if (node._rawPosition === -1) {
+            node._renderFirstFrame();
+        }
+    }
+    if (node instanceof Container) {
+        var children = node.children.slice();
+        for (var i = children.length - 1; i >= 0; i--) {
+            if (children[i] instanceof MovieClip) {
+                settleForDrawing(children[i]);
             }
         }
     }
@@ -3359,6 +3401,25 @@ var AnimateController = function AnimateController(container) {
     this._deltas = [];
     this._nextDelta = 0;
     this._container = container;
+    // Pixi updates the transforms of the tree before every draw: the roots a goto changed outside
+    // the playing are settled then, as a createjs draw settles them (frames played meanwhile settle them first)
+    var updateTransform = container.updateTransform;
+    var controller = this;
+    container.updateTransform = function () {
+        controller._settleForDrawing();
+        updateTransform.call(this);
+    };
+};
+/** Settles the roots marked by a goto since they were last resolved */
+AnimateController.prototype._settleForDrawing = function _settleForDrawing () {
+    var targets = this._targets;
+    Object.keys(targets).forEach(function (key) {
+        var target = targets[Number(key)];
+        if (target && target.root._pendingResolve) {
+            target.root._pendingResolve = false;
+            settleForDrawing(target.root);
+        }
+    });
 };
 AnimateController.prototype.handleTick = function handleTick (delta) {
         var this$1$1 = this;

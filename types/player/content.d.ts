@@ -167,4 +167,15 @@ export declare function tick(root: DisplayObject, event?: Event): void;
  * reverse order), without playing a frame.
  */
 export declare function resolveState(node: DisplayObject): void;
+/**
+ * Settles a display tree for drawing without playing it on, as a createjs
+ * stage draw shows it (MovieClip.draw settles each clip): the synched and
+ * single frame clips are placed at the frame their parent gives, and a clip
+ * waiting to start over (an independent clip reset when its parent placed it
+ * again) is shown at its first frame the way a new clip is (no frame script,
+ * its playhead left to start on the next frame, as in the template, where
+ * createjs draws only after a frame). Children after their parent, in reverse
+ * order as the resolve phase.
+ */
+export declare function settleForDrawing(node: DisplayObject): void;
 export {};

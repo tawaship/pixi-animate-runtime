@@ -147,9 +147,10 @@
 
 	/**
 	 * Plays the published HTML with CreateJS. Its stage is taken off the
-	 * CreateJS Ticker and played here at the content's frame rate (the same rule
-	 * as AnimateContainer), so that it can be stopped and stepped; the chosen
-	 * symbol replaces the root, set up as the HTML sets up its own.
+	 * CreateJS Ticker and played here at the content's frame rate, by the rule of
+	 * the Ticker (one frame at most a display frame, frames owed beyond it
+	 * dropped), so that it can be stopped and stepped; the chosen symbol replaces
+	 * the root, set up as the HTML sets up its own.
 	 */
 	function startCreatejs(sample, content, symbol, id) {
 		var props = content.properties;
@@ -189,9 +190,11 @@
 							var delta = Math.min((now - last) / (1000 / 60), 10);
 							last = now;
 							player.t += delta * (playing ? 1 : 0) * player.fps / 60;
-							var whole = player.t | 0;
-							player.t -= whole;
-							for (var f = 0; f < whole; f++) {
+							// One frame at most a display frame, as the HTML's Ticker plays it (one stage.update, which draws, a tick):
+							// frames owed beyond it are dropped, not played (a slow display slows the content down; playing them
+							// would draw each of them, which would make the display slower still)
+							if (player.t >= 1) {
+								player.t = (player.t - 1) % 1;
 								win.stage.update();
 							}
 							player.raf = requestAnimationFrame(loop);

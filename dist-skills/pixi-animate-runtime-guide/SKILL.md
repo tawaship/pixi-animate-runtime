@@ -5,7 +5,7 @@ description: Use this skill whenever the user asks to create, edit, or debug con
 
 # @tawaship/pixi-animate-runtime development skill
 
-Supported versions: **`^0.1.0`** (written against `0.1.1`).
+Supported versions: **`^0.1.0`** (written against `0.1.2`).
 
 First determine the installed version (`node_modules/@tawaship/pixi-animate-runtime/package.json`). If it is outside the supported range, **treat the type definitions in node_modules as authoritative** and follow them wherever they disagree with this skill.
 

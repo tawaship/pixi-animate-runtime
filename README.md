@@ -442,6 +442,13 @@ Known faults are put into the player on purpose to confirm that the comparisons 
 
 ## Change log
 
+### 0.1.2
+
+- Gradient fills and strokes are padded with their end colors beyond their range, as CreateJS paints them; the
+  gradient was repeated there (a gradient made smaller than its shape with the gradient transform tool)
+- A gradient drawn small keeps its colors (they were averaged), and the end colors of a linear gradient are exact
+- Gradient textures are no longer kept in PixiJS's global texture cache; the latest 256 gradients are shared
+
 ### 0.1.1
 
 - A `speed` below `0` stops the playing as `0` does. It kept the playing stopped for a while after the speed was

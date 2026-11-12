@@ -1,5 +1,5 @@
 /*!
- * @tawaship/pixi-animate-runtime - v0.1.1
+ * @tawaship/pixi-animate-runtime - v0.1.2
  * 
  * @author tawaship (makazu.mori@gmail.com)
  * @license MIT
@@ -1589,18 +1589,47 @@ function gradientOf(style) {
 }
 /** Pixels a gradient is drawn across: along the line of a linear one, across the circles of a radial one */
 var GRADIENT_SIZE = 256;
+/** How many gradient textures are kept for sharing (the oldest one is let go beyond it) */
+var GRADIENT_TEXTURES_KEPT = 256;
+/**
+ * The base texture of a gradient: always clamped, so that the texture's edge
+ * pixels go on beyond its drawn area, which is how canvas pads a gradient
+ * with its end colors. Pixi's Graphics sets the wrap mode of every texture it
+ * fills with to REPEAT when it builds its batches; that is ignored here.
+ * Without mipmaps (a small shape drawn from averaged colors would not show
+ * the gradient's own), and out of Pixi's global texture cache (it is never
+ * let go there).
+ */
+var GradientBaseTexture = /*@__PURE__*/(function (superclass) {
+    function GradientBaseTexture(canvas) {
+        superclass.call(this, canvas, { mipmap: PIXI__namespace.MIPMAP_MODES.OFF, wrapMode: PIXI__namespace.WRAP_MODES.CLAMP });
+        Object.defineProperty(this, 'wrapMode', {
+            get: function () { return PIXI__namespace.WRAP_MODES.CLAMP; },
+            set: function () {
+                // Kept clamped whatever Pixi sets
+            },
+            configurable: true
+        });
+    }
+
+    if ( superclass ) GradientBaseTexture.__proto__ = superclass;
+    GradientBaseTexture.prototype = Object.create( superclass && superclass.prototype );
+    GradientBaseTexture.prototype.constructor = GradientBaseTexture;
+
+    return GradientBaseTexture;
+}(PIXI__namespace.BaseTexture));
 /**
  * A gradient drawn into a canvas by the browser's own gradient (so its
  * colors are what canvas, and createjs, paints), as a texture that Pixi's
  * Graphics fills and strokes with through a matrix. `gradient` is the
  * gradient in the shape's coordinates, `local` the same gradient in the
  * texture's pixels, and `toShape` takes texture pixels to the shape's
- * coordinates. Outside the drawn area the texture's edge pixels repeat
- * (Pixi clamps), which is how canvas pads a gradient with its end colors.
+ * coordinates. Outside the drawn area the texture's edge pixels go on (the
+ * texture is clamped), which is how canvas pads a gradient with its end colors.
  */
 var GradientTexture = /*@__PURE__*/(function (superclass) {
     function GradientTexture(canvas, gradient, local, toShape) {
-        superclass.call(this, PIXI__namespace.BaseTexture.from(canvas));
+        superclass.call(this, new GradientBaseTexture(canvas));
         this.gradient = gradient;
         this.local = local;
         this.toShape = toShape;
@@ -1612,16 +1641,26 @@ var GradientTexture = /*@__PURE__*/(function (superclass) {
 
     return GradientTexture;
 }(PIXI__namespace.Texture));
-/** Gradient textures by their gradient, shared by every drawing that uses the same gradient */
+/** Gradient textures by their gradient, shared by every drawing that uses the same gradient (the latest ones) */
 var gradientTextures = new Map();
 function gradientTexture(gradient) {
     var key = JSON.stringify(gradient);
     var known = gradientTextures.get(key);
     if (known !== undefined) {
+        // The latest used is kept longest
+        gradientTextures.delete(key);
+        gradientTextures.set(key, known);
         return known;
     }
     var texture = gradient.type === 'linear' ? linearGradientTexture(gradient) : radialGradientTexture(gradient);
     gradientTextures.set(key, texture);
+    if (gradientTextures.size > GRADIENT_TEXTURES_KEPT) {
+        // Let go of the one used longest ago (the drawings that use it keep it as long as they need it)
+        var oldest = gradientTextures.keys().next();
+        if (!oldest.done) {
+            gradientTextures.delete(oldest.value);
+        }
+    }
     return texture;
 }
 function paintGradient(canvas, local) {
@@ -1639,9 +1678,12 @@ function paintGradient(canvas, local) {
     context.fillRect(0, 0, canvas.width, canvas.height);
 }
 /**
- * A linear gradient drawn from the left edge to the right edge of a canvas
- * one pixel high. The texture's x axis runs along the gradient's line and its
- * y axis across it (every row is the same, so how far across does not matter).
+ * A linear gradient drawn across a canvas one pixel high, from a pixel in
+ * from its left edge to a pixel in from its right edge, so that the edge
+ * pixels (which the clamp goes on with) are the end colors themselves: a
+ * pixel holds the color at its center, short of the end of the line. The
+ * texture's x axis runs along the gradient's line and its y axis across it
+ * (every row is the same, so how far across does not matter).
  */
 function linearGradientTexture(gradient) {
     var dx = gradient.x1 - gradient.x0;
@@ -1651,14 +1693,15 @@ function linearGradientTexture(gradient) {
         return null;
     }
     var canvas = document.createElement('canvas');
-    canvas.width = GRADIENT_SIZE;
+    canvas.width = GRADIENT_SIZE + 2;
     canvas.height = 1;
     var local = {
         type: 'linear', colors: gradient.colors, ratios: gradient.ratios,
-        x0: 0, y0: 0, r0: 0, x1: GRADIENT_SIZE, y1: 0, r1: 0
+        x0: 1, y0: 0, r0: 0, x1: GRADIENT_SIZE + 1, y1: 0, r1: 0
     };
     paintGradient(canvas, local);
-    var toShape = new PIXI__namespace.Matrix(dx / GRADIENT_SIZE, dy / GRADIENT_SIZE, -dy / length, dx / length, gradient.x0, gradient.y0);
+    // Texture pixel 1 is the start of the line, GRADIENT_SIZE + 1 its end
+    var toShape = new PIXI__namespace.Matrix(dx / GRADIENT_SIZE, dy / GRADIENT_SIZE, -dy / length, dx / length, gradient.x0 - dx / GRADIENT_SIZE, gradient.y0 - dy / GRADIENT_SIZE);
     return new GradientTexture(canvas, gradient, local, toShape);
 }
 /**
@@ -2697,7 +2740,7 @@ function checkVersion(version, range, known) {
 }
 
 /** The version of this package (written in from package.json when the package is built) */
-var VERSION = "0.1.1";
+var VERSION = "0.1.2";
 
 /**
  * The eases of CreateJS (createjs.Ease), computed as CreateJS computes them,

@@ -68,8 +68,8 @@ export interface IGradient {
  * Graphics fills and strokes with through a matrix. `gradient` is the
  * gradient in the shape's coordinates, `local` the same gradient in the
  * texture's pixels, and `toShape` takes texture pixels to the shape's
- * coordinates. Outside the drawn area the texture's edge pixels repeat
- * (Pixi clamps), which is how canvas pads a gradient with its end colors.
+ * coordinates. Outside the drawn area the texture's edge pixels go on (the
+ * texture is clamped), which is how canvas pads a gradient with its end colors.
  */
 export declare class GradientTexture extends PIXI.Texture {
     readonly gradient: IGradient;
